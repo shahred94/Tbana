@@ -26,7 +26,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: PUBLIC_BASE_URL
-        sync: false
+        value: https://tbanastream-api.onrender.com
       - key: TRUSTED_HOSTS
         sync: false
       - key: ALLOWED_ORIGINS
