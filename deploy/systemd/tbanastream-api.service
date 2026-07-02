@@ -1,0 +1,26 @@
+[Unit]
+Description=Tbana Stream Subscription API
+Wants=network-online.target
+After=network-online.target postgresql.service
+
+[Service]
+Type=simple
+User=__APP_USER__
+Group=__APP_USER__
+WorkingDirectory=__APP_DIR__
+EnvironmentFile=/etc/tbanastream/tbanastream.env
+ExecStart=__APP_DIR__/.venv/bin/uvicorn app.production_main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1 --log-level ${LOG_LEVEL} --no-server-header
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGINT
+
+# Basic service isolation. The API does not need access to home directories.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=full
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

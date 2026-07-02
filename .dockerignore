@@ -1,0 +1,11 @@
+.env
+.git
+.venv
+__pycache__
+*.pyc
+app/livetrigger.db
+assets
+dashboard
+sounds
+tests
+web

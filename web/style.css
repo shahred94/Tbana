@@ -1,0 +1,214 @@
+body {
+    background: transparent;
+    overflow: hidden;
+    font-family: Arial;
+}
+
+
+#alert {
+    position: absolute;
+    top: 50px;
+    right: 50px;
+
+    display: flex;
+    align-items: center;
+
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+
+    padding: 20px;
+    border-radius: 15px;
+
+    font-size: 20px;
+
+    transition: 0.5s;
+}
+
+
+.gift {
+    font-size: 50px;
+    margin-right: 15px;
+}
+
+
+.hidden {
+    opacity: 0;
+    transform: translateX(200px);
+}
+
+
+.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+
+.spin-widget {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+}
+
+
+.spin-widget.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+
+.spin-card {
+    min-width: 420px;
+    padding: 26px;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at top left, rgba(34, 197, 94, 0.28), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(168, 85, 247, 0.3), transparent 35%),
+        rgba(5, 10, 24, 0.86);
+    color: white;
+    box-shadow:
+        0 28px 90px rgba(0, 0, 0, 0.55),
+        0 0 36px rgba(34, 197, 94, 0.26);
+    text-align: center;
+}
+
+
+.spin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 18px;
+    font-size: 22px;
+}
+
+
+.spin-header span {
+    overflow: hidden;
+    max-width: 260px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.spin-header strong {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #22c55e;
+    color: #04130a;
+    box-shadow: 0 0 28px rgba(34, 197, 94, 0.52);
+}
+
+
+.spin-stage {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto 18px;
+}
+
+
+.spin-wheel {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border: 10px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    background: conic-gradient(
+        #22c55e 0% 12.5%,
+        #06b6d4 12.5% 25%,
+        #a855f7 25% 37.5%,
+        #f97316 37.5% 50%,
+        #eab308 50% 62.5%,
+        #ef4444 62.5% 75%,
+        #14b8a6 75% 87.5%,
+        #ec4899 87.5% 100%
+    );
+    box-shadow:
+        inset 0 0 38px rgba(0, 0, 0, 0.34),
+        0 0 36px rgba(255, 255, 255, 0.2);
+}
+
+
+.spin-wheel::before {
+    content: "";
+    position: absolute;
+    inset: 46px;
+    border-radius: 50%;
+    background: rgba(4, 9, 20, 0.82);
+    box-shadow: inset 0 0 28px rgba(255, 255, 255, 0.08);
+}
+
+
+.spin-wheel span {
+    position: relative;
+    z-index: 1;
+    font-size: 38px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
+}
+
+
+.spin-pointer {
+    position: absolute;
+    z-index: 3;
+    top: -14px;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-top: 34px solid #ffffff;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.55));
+    transform: translateX(-50%);
+}
+
+
+.spin-result span,
+.spin-result strong {
+    display: block;
+}
+
+
+.spin-result span {
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+
+.spin-result strong {
+    margin-top: 5px;
+    color: #fef08a;
+    font-size: 32px;
+    text-shadow: 0 0 22px rgba(250, 204, 21, 0.55);
+}
+
+
+.spin-widget.winner .spin-card {
+    animation: winner-pop 0.8s ease;
+}
+
+
+@keyframes winner-pop {
+    0% {
+        transform: scale(1);
+    }
+
+    35% {
+        transform: scale(1.06);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
