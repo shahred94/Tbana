@@ -37,3 +37,5 @@ services:
         sync: false
       - key: TOYYIBPAY_SECRET_KEY
         sync: false
+      - key: PRO_PRICE_CENTS
+        value: 100
