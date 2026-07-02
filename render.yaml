@@ -1,5 +1,6 @@
 databases:
-  - name: tbanastream-db
+  - name: tbanastream-db-free
+    plan: free
     databaseName: tbanastream
     user: tbanastream
     region: singapore
@@ -8,6 +9,7 @@ services:
   - type: web
     name: tbanastream-api
     runtime: python
+    plan: free
     region: singapore
     buildCommand: pip install -r requirements-production.txt
     startCommand: uvicorn app.production_main:app --host 0.0.0.0 --port $PORT
@@ -19,7 +21,7 @@ services:
         value: 3.13.5
       - key: DATABASE_URL
         fromDatabase:
-          name: tbanastream-db
+          name: tbanastream-db-free
           property: connectionString
       - key: SECRET_KEY
         generateValue: true
