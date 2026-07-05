@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual Environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Database
+*.db
+livetrigger.db
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+build/
+dist/
+
+# Python cache
+.pytest_cache/
+.mypy_cache/
+# Extra ignored folders
+**/.venv/
+**/venv/
+**/env/
+**/__pycache__/
+**/*.pyc
+
+# Node / frontend
+node_modules/
+
+# Railway / logs
+.tools/railway-*/
+*.err
+*.out

@@ -1,0 +1,464 @@
+body {
+    background: transparent;
+    overflow: hidden;
+    font-family: Arial;
+}
+
+
+#alert {
+    position: absolute;
+    top: 50px;
+    right: 50px;
+
+    display: flex;
+    align-items: center;
+
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+
+    padding: 20px;
+    border-radius: 15px;
+
+    font-size: 20px;
+
+    transition: 0.5s;
+}
+
+
+.gift {
+    font-size: 50px;
+    margin-right: 15px;
+}
+
+
+.hidden {
+    opacity: 0;
+    transform: translateX(200px);
+}
+
+
+.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.spin-notice {
+    position: absolute;
+    z-index: 10;
+    top: 42px;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: min(760px, calc(100vw - 48px));
+    padding: 15px 20px;
+    border: 1px solid rgba(250, 204, 21, 0.42);
+    border-radius: 16px;
+    background: rgba(5, 10, 24, 0.92);
+    color: #f8fafc;
+    box-shadow: 0 18px 54px rgba(0, 0, 0, 0.45);
+    font-size: 19px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translate(-50%, -24px);
+}
+
+.spin-notice.hidden {
+    opacity: 0;
+    transform: translate(-50%, -24px);
+}
+
+.spin-notice.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.spin-notice strong {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #facc15;
+    color: #211700;
+}
+
+.spin-notice span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.spin-widget {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    pointer-events: none;
+}
+
+
+.spin-widget.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+
+.spin-card {
+    min-width: 420px;
+    padding: 26px;
+    border: 2px solid rgba(255, 255, 255, 0.18);
+    border-radius: 28px;
+    background: rgba(0, 0, 0, 0.96);
+    color: white;
+    box-shadow:
+        0 28px 90px rgba(0, 0, 0, 0.55),
+        0 0 36px rgba(34, 197, 94, 0.26);
+    text-align: center;
+}
+
+
+.spin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 18px;
+    font-size: 22px;
+}
+
+
+.spin-header span {
+    overflow: hidden;
+    max-width: 260px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.spin-header strong {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #22c55e;
+    color: #04130a;
+    box-shadow: 0 0 28px rgba(34, 197, 94, 0.52);
+}
+
+
+.spin-stage {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 0 auto 18px;
+}
+
+
+.spin-wheel {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border: 10px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    background: conic-gradient(
+        #22c55e 0% 12.5%,
+        #06b6d4 12.5% 25%,
+        #a855f7 25% 37.5%,
+        #f97316 37.5% 50%,
+        #eab308 50% 62.5%,
+        #ef4444 62.5% 75%,
+        #14b8a6 75% 87.5%,
+        #ec4899 87.5% 100%
+    );
+    box-shadow:
+        inset 0 0 38px rgba(0, 0, 0, 0.34),
+        0 0 36px rgba(255, 255, 255, 0.2);
+}
+
+
+.spin-wheel::before {
+    content: "";
+    position: absolute;
+    inset: 48px;
+    border-radius: 50%;
+    background: rgba(4, 9, 20, 0.82);
+    box-shadow: inset 0 0 28px rgba(255, 255, 255, 0.08);
+}
+
+
+.spin-stage-center {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+}
+
+
+.spin-viewer-frame {
+    position: relative;
+    width: 118px;
+    height: 118px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid rgba(255, 255, 255, 0.88);
+    background: radial-gradient(
+        circle at 30% 25%,
+        rgba(255, 255, 255, 0.16),
+        rgba(10, 16, 32, 0.98) 64%
+    );
+    box-shadow:
+        0 0 0 10px rgba(2, 8, 19, 0.78),
+        0 0 30px rgba(250, 204, 21, 0.18),
+        inset 0 0 18px rgba(255, 255, 255, 0.16);
+}
+
+
+.spin-viewer-avatar,
+.spin-viewer-fallback {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+
+.spin-viewer-avatar {
+    display: block;
+    object-fit: cover;
+}
+
+
+.spin-viewer-fallback {
+    display: grid;
+    place-items: center;
+    color: #fef08a;
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.75);
+}
+
+
+.spin-viewer-fallback.hidden,
+.spin-viewer-avatar.hidden {
+    display: none;
+}
+
+
+.spin-segment-label {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 50%;
+    width: 88px;
+    overflow: hidden;
+    color: #ffffff;
+    font-weight: 800;
+    line-height: 1.05;
+    text-align: center;
+    text-overflow: ellipsis;
+    text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.95),
+        0 0 6px rgba(0, 0, 0, 0.85);
+    white-space: nowrap;
+}
+
+
+.spin-pointer {
+    display: none;
+}
+
+
+.spin-result span,
+.spin-result strong {
+    display: block;
+}
+
+
+.spin-result span {
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+
+.spin-result strong {
+    margin-top: 5px;
+    color: #fef08a;
+    font-size: 32px;
+    text-shadow: 0 0 22px rgba(250, 204, 21, 0.55);
+}
+
+
+.spin-widget.rarity-rare .spin-result strong {
+    color: #ddd6fe;
+    text-shadow:
+        0 0 18px rgba(167, 139, 250, 0.65),
+        0 0 32px rgba(139, 92, 246, 0.28);
+}
+
+
+.spin-widget.rarity-epic .spin-result strong {
+    color: #fef3c7;
+    font-size: 36px;
+    letter-spacing: 0.6px;
+    text-shadow:
+        0 0 16px rgba(250, 204, 21, 0.85),
+        0 0 36px rgba(245, 158, 11, 0.7),
+        0 0 58px rgba(168, 85, 247, 0.35);
+    animation: epic-glow 1.3s ease-in-out infinite alternate;
+}
+
+
+.spin-result-rarity {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 88px;
+    margin-top: 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: #0b1220;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition:
+        opacity 0.28s ease,
+        transform 0.28s ease,
+        filter 0.28s ease;
+}
+
+
+.spin-result-rarity.hidden {
+    opacity: 0;
+    transform: translateY(12px) scale(0.9);
+    filter: blur(2px);
+    pointer-events: none;
+}
+
+
+.spin-result-rarity.rarity-common {
+    background: linear-gradient(135deg, #bbf7d0, #22c55e);
+    box-shadow:
+        0 0 0 1px rgba(34, 197, 94, 0.3),
+        0 10px 24px rgba(34, 197, 94, 0.28);
+}
+
+
+.spin-result-rarity.rarity-rare {
+    background: linear-gradient(135deg, #ddd6fe, #8b5cf6);
+    box-shadow:
+        0 0 0 1px rgba(139, 92, 246, 0.3),
+        0 10px 24px rgba(139, 92, 246, 0.3);
+}
+
+
+.spin-result-rarity.rarity-epic {
+    background: linear-gradient(135deg, #fff3bf, #f59e0b, #ef4444);
+    box-shadow:
+        0 0 0 1px rgba(245, 158, 11, 0.38),
+        0 0 26px rgba(245, 158, 11, 0.52),
+        0 0 52px rgba(168, 85, 247, 0.28);
+}
+
+
+.spin-result-rarity.reveal {
+    animation: rarity-pop 0.42s cubic-bezier(0.2, 1.2, 0.3, 1);
+}
+
+
+.spin-widget.rarity-epic .spin-result-rarity.reveal {
+    animation:
+        rarity-pop 0.42s cubic-bezier(0.2, 1.2, 0.3, 1),
+        epic-bounce 1.2s ease-in-out infinite;
+}
+
+
+.spin-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 11px;
+    margin-top: 18px;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+
+.spin-brand img {
+    width: 68px;
+    height: 39px;
+    object-fit: contain;
+}
+
+
+.spin-widget.winner .spin-card {
+    animation: winner-pop 0.8s ease;
+}
+
+
+@keyframes winner-pop {
+    0% {
+        transform: scale(1);
+    }
+
+    35% {
+        transform: scale(1.06);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+
+@keyframes rarity-pop {
+    0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.72);
+    }
+
+    65% {
+        opacity: 1;
+        transform: translateY(-3px) scale(1.08);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+
+@keyframes epic-glow {
+    from {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+
+    to {
+        transform: scale(1.02);
+        filter: brightness(1.12);
+    }
+}
+
+
+@keyframes epic-bounce {
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+    }
+
+    50% {
+        transform: translateY(-2px) scale(1.04);
+    }
+}

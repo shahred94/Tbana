@@ -1,0 +1,13 @@
+fastapi==0.115.6
+starlette==0.41.3
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-core==2.27.2
+TikTokLive==6.6.5
+pygame==2.6.1
+PyAutoGUI==0.9.54
+edge-tts==7.2.8
+bcrypt==5.0.0
+httpx==0.28.1
+psycopg[binary]==3.2.9
+python-multipart==0.0.20
