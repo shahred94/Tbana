@@ -130,6 +130,211 @@ def normalize_all_action_types() -> None:
         connection.commit()
 
 
+def migrate_legacy_events_to_event_triggers(
+    cursor: sqlite3.Cursor,
+) -> int:
+    """Copy old events/event_actions rows into the unified event trigger system."""
+
+    cursor.execute(
+        """
+        SELECT
+            id,
+            enabled,
+            trigger_type,
+            trigger_value,
+            user_filter,
+            action_type,
+            action_value
+        FROM events
+        ORDER BY id
+        """
+    )
+    legacy_events = cursor.fetchall()
+
+    if not legacy_events:
+
+        return 0
+
+    cursor.execute(
+        """
+        SELECT
+            trigger_type,
+            trigger_value,
+            user_filter
+        FROM event_triggers
+        """
+    )
+    existing_triggers = {
+        (
+            str(row["trigger_type"] or "").strip().casefold(),
+            str(row["trigger_value"] or "").strip().casefold(),
+            str(row["user_filter"] or "ANY").strip().casefold(),
+        )
+        for row in cursor.fetchall()
+    }
+
+    migrated = 0
+
+    for event in legacy_events:
+
+        trigger_type = str(
+            event["trigger_type"] or "GIFT"
+        ).strip()
+        trigger_value = str(
+            event["trigger_value"] or ""
+        ).strip()
+        user_filter = str(
+            event["user_filter"] or "ANY"
+        ).strip() or "ANY"
+
+        trigger_key = (
+            trigger_type.casefold(),
+            trigger_value.casefold(),
+            user_filter.casefold(),
+        )
+
+        if trigger_key in existing_triggers:
+
+            continue
+
+        cursor.execute(
+            """
+            SELECT
+                action_type,
+                action_value
+            FROM event_actions
+            WHERE event_id = ?
+            ORDER BY id
+            """,
+            (event["id"],),
+        )
+        legacy_actions = cursor.fetchall()
+
+        if not legacy_actions and (
+            event["action_type"] is not None
+            and event["action_value"] is not None
+        ):
+
+            legacy_actions = [
+                {
+                    "action_type": event["action_type"],
+                    "action_value": event["action_value"],
+                }
+            ]
+
+        normalized_actions = []
+
+        for action in legacy_actions:
+
+            action_type = normalize_action_type(
+                action["action_type"]
+            )
+            action_value = action["action_value"]
+
+            if (
+                not action_type
+                or action_value is None
+            ):
+
+                continue
+
+            normalized_actions.append(
+                (
+                    action_type,
+                    str(action_value),
+                )
+            )
+
+        if not normalized_actions:
+
+            continue
+
+        action_name = (
+            f"Legacy {trigger_type} {trigger_value}"
+        ).strip()
+
+        cursor.execute(
+            """
+            INSERT INTO action_presets
+            (
+                name,
+                duration,
+                description,
+                enabled,
+                media_volume,
+                overlay_screen,
+                global_cooldown,
+                user_cooldown,
+                fade_enabled,
+                repeat_gift_combos,
+                skip_on_next_action
+            )
+            VALUES
+            (?, 0, ?, ?, 100, 1, 0, 0, 0, 0, 0)
+            """,
+            (
+                action_name,
+                "Migrated from legacy events table",
+                int(bool(event["enabled"])),
+            ),
+        )
+        action_id = cursor.lastrowid
+
+        for index, (action_type, action_value) in enumerate(
+            normalized_actions,
+            start=1,
+        ):
+
+            cursor.execute(
+                """
+                INSERT INTO action_steps
+                (
+                    action_id,
+                    step_order,
+                    step_type,
+                    step_value
+                )
+                VALUES
+                (?, ?, ?, ?)
+                """,
+                (
+                    action_id,
+                    index,
+                    action_type,
+                    action_value,
+                ),
+            )
+
+        cursor.execute(
+            """
+            INSERT INTO event_triggers
+            (
+                enabled,
+                trigger_type,
+                trigger_value,
+                user_filter,
+                action_id,
+                action_mode,
+                action_group
+            )
+            VALUES
+            (?, ?, ?, ?, ?, 'single', '')
+            """,
+            (
+                int(bool(event["enabled"])),
+                trigger_type,
+                trigger_value,
+                user_filter,
+                action_id,
+            ),
+        )
+
+        existing_triggers.add(trigger_key)
+        migrated += 1
+
+    return migrated
+
+
 
 def initialize_database() -> None:
     """Create database tables."""
@@ -409,6 +614,10 @@ def initialize_database() -> None:
                     = events.id
                 )
             """
+        )
+
+        migrate_legacy_events_to_event_triggers(
+            cursor
         )
 
 

@@ -7,12 +7,9 @@ import time
 from app.core.events import LiveEvent
 
 from app.storage.sqlite_store import (
-    get_events,
-    get_event_actions,
     get_event_triggers,
     get_action_presets,
     get_action_steps,
-    get_setting,
     normalize_gift_name,
 )
 
@@ -36,6 +33,14 @@ class EventEngine:
     def __init__(self):
 
         self.like_counters = {}
+        self.follow_trigger_used = False
+
+
+    def reset_live_session(self) -> None:
+
+        """Reset per-live one-shot triggers."""
+
+        self.follow_trigger_used = False
 
 
     def process(
@@ -75,7 +80,27 @@ class EventEngine:
             runtime_plan,
         )
 
+        if (
+            event.event_type.lower() == "follow"
+            and self.follow_trigger_used
+        ):
+
+            print(
+                "[EVENT_ENGINE] Follow skipped: already handled for this live."
+            )
+
+            return {
+                "matched": False,
+                "event_type": event.event_type,
+                "actions": [],
+                "spin": None,
+                "blocked": "FOLLOW_ALREADY_HANDLED",
+            }
+
         actions = []
+        if event.event_type.lower() == "follow":
+
+            self.follow_trigger_used = True
 
         spin_result = trigger_spin_command(
             event
@@ -140,7 +165,7 @@ class EventEngine:
             ):
 
                 continue
-                
+
             user_filter = (
                 item["user_filter"]
             )
@@ -287,27 +312,6 @@ class EventEngine:
                 item,
                 item_actions,
             )
-
-
-        legacy_actions = []
-
-        if (
-            get_setting(
-                "enable_legacy_events"
-            )
-            ==
-            "true"
-        ):
-
-            legacy_actions = self.process_legacy_events(
-                event
-            )
-
-        actions.extend(
-            legacy_actions
-        )
-
-
         result = {
             "matched": len(actions) > 0,
             "event_type": event.event_type,
@@ -1062,140 +1066,5 @@ class EventEngine:
             )
 
         return text
-
-
-    def process_legacy_events(
-        self,
-        event: LiveEvent,
-    ) -> list[dict]:
-
-        """Execute legacy events/event_actions for compatibility."""
-
-        actions = []
-
-        events = get_events()
-
-
-        for item in events:
-
-            if not item["enabled"]:
-
-                continue
-
-
-            if not self.match_trigger(
-                event,
-                item,
-            ):
-
-                continue
-
-
-            user_filter = (
-                item["user_filter"]
-            )
-
-            if (
-                user_filter
-                and
-                user_filter.upper()
-                != "ANY"
-            ):
-
-                if (
-                    not event.user
-                    or
-                    event.user.lower()
-                    != user_filter.lower()
-                ):
-
-                    print(
-                        "User blocked:",
-                        event.user
-                    )
-
-                    continue
-
-
-            event_actions = get_event_actions(
-                item["id"]
-            )
-
-            if (
-                not event_actions
-                and
-                item.get(
-                    "action_type"
-                )
-                and
-                item.get(
-                    "action_value"
-                )
-            ):
-
-                event_actions = [
-                    item
-                ]
-
-
-            item_actions = []
-
-
-            print(
-                "[EVENT_ENGINE] Legacy trigger match:",
-                event.event_type,
-                "event_id:",
-                item["id"],
-            )
-
-
-            for action_item in event_actions:
-
-                action = self.build_action(
-                    event,
-                    action_item,
-                )
-
-
-                if action:
-
-                    action[
-                        "_action_preset_id"
-                    ] = None
-
-                    action[
-                        "_action_preset_name"
-                    ] = "Legacy Event"
-
-                    action[
-                        "_step_id"
-                    ] = action_item.get(
-                        "id"
-                    )
-
-                    action[
-                        "_step_order"
-                    ] = None
-
-                    actions.append(
-                        action
-                    )
-
-                    item_actions.append(
-                        action
-                    )
-
-
-            if item_actions:
-
-                self.execute_actions(
-                    event,
-                    item,
-                    item_actions,
-                )
-
-
-        return actions
-
 
 event_engine = EventEngine()

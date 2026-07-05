@@ -324,7 +324,7 @@ class SubscriptionFlowTest(unittest.TestCase):
             "/api/actions/event-triggers",
             json={
                 "trigger_type": "GIFT",
-                "trigger_value": "Rose",
+                "trigger_value": "Test Mango",
                 "user_filter": "ANY",
                 "action_id": action_id,
             },
@@ -334,7 +334,13 @@ class SubscriptionFlowTest(unittest.TestCase):
         events = self.client.get(
             "/api/actions/event-triggers"
         ).json()["events"]
-        event_id = events[0]["id"]
+        mango_events = [
+            item
+            for item in events
+            if item["trigger_value"] == "Test Mango"
+        ]
+        self.assertEqual(len(mango_events), 1)
+        event_id = mango_events[0]["id"]
 
         from app.core.events import LiveEvent
         from app.rules.event_engine import event_engine
@@ -344,7 +350,7 @@ class SubscriptionFlowTest(unittest.TestCase):
                 event_type="gift",
                 user="Viewer",
                 data={
-                    "gift_name": "Rose",
+                    "gift_name": "Test Mango",
                     "_simulator": True,
                 },
             )
@@ -386,7 +392,12 @@ class SubscriptionFlowTest(unittest.TestCase):
         duplicated_events = self.client.get(
             "/api/actions/event-triggers"
         ).json()["events"]
-        self.assertEqual(len(duplicated_events), 2)
+        duplicated_mango_events = [
+            item
+            for item in duplicated_events
+            if item["trigger_value"] == "Test Mango"
+        ]
+        self.assertEqual(len(duplicated_mango_events), 2)
 
     def test_password_reset_code_changes_password_and_revokes_sessions(self):
         from app.core.config import settings

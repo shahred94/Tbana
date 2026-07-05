@@ -48,10 +48,6 @@ class GiftMatchingTest(unittest.TestCase):
                 return_value=None,
             ),
             patch(
-                "app.rules.event_engine.get_setting",
-                return_value="false",
-            ),
-            patch(
                 "app.rules.event_engine.get_event_triggers",
                 return_value=[
                     {
@@ -116,6 +112,96 @@ class GiftMatchingTest(unittest.TestCase):
 
         self.assertTrue(result["matched"])
         self.assertEqual(execute_action.call_count, 5)
+
+    def test_follow_trigger_runs_only_once_per_live_session(self):
+        event_engine.reset_live_session()
+
+        with (
+            patch(
+                "app.auth.service.active_runtime_plan",
+                return_value="free",
+            ),
+            patch(
+                "app.auth.service.runtime_item_is_allowed",
+                return_value=True,
+            ),
+            patch(
+                "app.auth.service.runtime_allowed_item_ids",
+                return_value=None,
+            ),
+            patch(
+                "app.rules.event_engine.get_event_triggers",
+                return_value=[
+                    {
+                        "id": 2,
+                        "enabled": 1,
+                        "trigger_type": "FOLLOW",
+                        "trigger_value": "",
+                        "user_filter": "ANY",
+                        "action_id": 7,
+                        "action_mode": "single",
+                        "action_group": "",
+                        "action": "Follow Action",
+                        "duration": 0,
+                        "media_volume": 100,
+                        "overlay_screen": 1,
+                        "global_cooldown": 0,
+                        "user_cooldown": 0,
+                        "fade_enabled": False,
+                        "repeat_gift_combos": False,
+                        "skip_on_next_action": False,
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.get_action_presets",
+                return_value=[
+                    {
+                        "id": 7,
+                        "enabled": True,
+                        "name": "Follow Action",
+                        "duration": 0,
+                        "media_volume": 100,
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.get_action_steps",
+                return_value=[
+                    {
+                        "id": 1,
+                        "order": 1,
+                        "type": "KEYBOARD",
+                        "value": "space",
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.action_executor.execute",
+            ) as execute_action,
+        ):
+            first = event_engine.process(
+                LiveEvent(
+                    event_type="FOLLOW",
+                    user="Viewer1",
+                    data={},
+                )
+            )
+            second = event_engine.process(
+                LiveEvent(
+                    event_type="FOLLOW",
+                    user="Viewer2",
+                    data={},
+                )
+            )
+
+        self.assertTrue(first["matched"])
+        self.assertEqual(execute_action.call_count, 1)
+        self.assertEqual(
+            second["blocked"],
+            "FOLLOW_ALREADY_HANDLED",
+        )
+        self.assertEqual(execute_action.call_count, 1)
 
 
 if __name__ == "__main__":

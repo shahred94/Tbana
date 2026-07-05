@@ -602,6 +602,8 @@ class TikTokConnector:
 
         try:
 
+            event_engine.reset_live_session()
+
             print(
                 "Starting TikTok listener:",
                 self.username
@@ -641,6 +643,7 @@ class TikTokConnector:
         """Stop TikTok listener."""
 
         await self.client.disconnect()
+        event_engine.reset_live_session()
 
         self.status = "OFFLINE"
 

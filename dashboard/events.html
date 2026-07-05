@@ -1291,11 +1291,11 @@ summary:focus-visible {
 
     display: none;
 
-    margin-left: 25px;
+    margin-left: 16px;
 
-    margin-bottom: 15px;
+    margin-bottom: 8px;
 
-    padding: 10px;
+    padding: 8px;
 
     background: var(--card-color);
 
@@ -1312,9 +1312,9 @@ summary:focus-visible {
 
     align-items: center;
 
-    gap: 10px;
+    gap: 8px;
 
-    margin-bottom: 10px;
+    margin-bottom: 6px;
 
     cursor: pointer;
 
@@ -1346,15 +1346,15 @@ summary:focus-visible {
 .action-step-list {
 
     display: grid;
-    gap: 10px;
-    margin-bottom: 18px;
+    gap: 8px;
+    margin-bottom: 12px;
 
 }
 
 .action-step-block {
 
     position: relative;
-    padding: 10px;
+    padding: 8px;
     border: 1px solid var(--border-color);
     border-radius: 9px;
     background: var(--table-cell);
@@ -1379,7 +1379,7 @@ summary:focus-visible {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     color: var(--muted-text);
     font-size: 11px;
     font-weight: 700;
@@ -1397,12 +1397,14 @@ summary:focus-visible {
 .action-step-block > .effect-option {
 
     margin-top: 0;
+    margin-bottom: 4px;
 
 }
 
 .action-step-block > .effect-field {
 
     margin-bottom: 0;
+    padding: 6px;
 
 }
 
@@ -5360,6 +5362,10 @@ let currentSounds = [];
 let ttsVoicesLoaded = false;
 let actionModalBaseline = null;
 let eventModalBaseline = null;
+let escCloseGuard = {
+    modalId: null,
+    touchedAt: 0,
+};
 
 const ACTION_STEP_DEFINITIONS = [
     {
@@ -8221,6 +8227,64 @@ document.addEventListener(
 );
 
 
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (event.key !== "Escape") {
+
+            return;
+
+        }
+
+        const actionModal =
+            document.getElementById(
+                "action-modal"
+            );
+        const eventModal =
+            document.getElementById(
+                "event-modal"
+            );
+
+        if (
+            actionModal
+            &&
+            actionModal.style.display === "block"
+        ) {
+
+            event.preventDefault();
+            handleModalEscape(
+                "action-modal",
+                actionModalHasUnsavedChanges(),
+                closeActionModal,
+                "Unsaved Action changes",
+                "Press ESC again to discard and close this Action."
+            );
+            return;
+
+        }
+
+        if (
+            eventModal
+            &&
+            eventModal.style.display === "block"
+        ) {
+
+            event.preventDefault();
+            handleModalEscape(
+                "event-modal",
+                eventModalHasUnsavedChanges(),
+                closeEventModal,
+                "Unsaved Event changes",
+                "Press ESC again to discard and close this Event."
+            );
+
+        }
+
+    }
+);
+
+
 function presetFilename() {
 
     const now =
@@ -9683,6 +9747,8 @@ function closeEventModal(
     ).style.display =
         "none";
 
+    clearEscCloseGuard();
+
     return true;
 
 }
@@ -11023,6 +11089,58 @@ function spinWheelEntriesFromForm() {
     ).filter(
         entry => entry.label
     );
+
+}
+
+function clearEscCloseGuard() {
+
+    escCloseGuard.modalId = null;
+    escCloseGuard.touchedAt = 0;
+
+}
+
+function handleModalEscape(
+    modalId,
+    hasUnsavedChanges,
+    closeModalFn,
+    warningTitle,
+    warningMessage
+) {
+
+    const now = Date.now();
+    const sameModal =
+        escCloseGuard.modalId === modalId;
+    const withinWindow =
+        now - escCloseGuard.touchedAt < 1800;
+
+    if (
+        hasUnsavedChanges
+        && sameModal
+        && withinWindow
+    ) {
+
+        clearEscCloseGuard();
+        closeModalFn(true);
+        return true;
+
+    }
+
+    if (hasUnsavedChanges) {
+
+        escCloseGuard.modalId = modalId;
+        escCloseGuard.touchedAt = now;
+
+        showToast(
+            warningTitle,
+            warningMessage
+        );
+
+        return true;
+
+    }
+
+    clearEscCloseGuard();
+    return closeModalFn(true);
 
 }
 
@@ -15761,6 +15879,8 @@ function closeActionModal(
     clearInlineValidation(
         "action"
     );
+
+    clearEscCloseGuard();
 
     return true;
 
