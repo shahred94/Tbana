@@ -10,6 +10,7 @@ from app.auth.service import require_authenticated
 from app.core.events import LiveEvent
 from app.rules.event_engine import event_engine
 from app.actions.manager import action_manager
+from app.widgets.goal import broadcast_like_goal
 
 
 router = APIRouter()
@@ -66,6 +67,10 @@ def test_event(
         data = {
             "count": request.count,
         }
+        broadcast_like_goal(
+            request.user,
+            request.count,
+        )
 
 
     event = LiveEvent(

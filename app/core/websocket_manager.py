@@ -26,8 +26,11 @@ class WebSocketManager:
         self.active_connections.append(websocket)
         self.connection_screens[websocket] = screen
         self.connection_overlays[websocket] = (
-            "spin"
-            if overlay_type == "spin"
+            overlay_type
+            if overlay_type in {
+                "goal",
+                "spin",
+            }
             else "screen"
         )
 
@@ -82,9 +85,17 @@ class WebSocketManager:
                 continue
 
             if (
-                message_type not in {"spin", "spin_notice"}
+                message_type == "goal"
                 and
-                overlay_type == "spin"
+                overlay_type != "goal"
+            ):
+
+                continue
+
+            if (
+                message_type not in {"spin", "spin_notice", "goal"}
+                and
+                overlay_type in {"goal", "spin"}
             ):
 
                 continue
@@ -140,6 +151,9 @@ class WebSocketManager:
             "total": len(self.active_connections),
             "spin_connections": self.connection_count(
                 "spin"
+            ),
+            "goal_connections": self.connection_count(
+                "goal"
             ),
             "screens": screens,
         }

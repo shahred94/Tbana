@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>TBana Stream Dashboard</title>
+
+<style>
+
+body {
+    background: #121212;
+    color: white;
+    font-family: Arial, sans-serif;
+    padding: 30px;
+}
+
+
+h1 {
+    color: #00ff88;
+}
+
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+
+th {
+    background: #333;
+    padding: 12px;
+    text-align: left;
+}
+
+
+td {
+    background: #222;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+}
+
+
+input {
+    display: block;
+    width: 300px;
+    padding: 10px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 5px;
+}
+
+
+button {
+    border: none;
+    padding: 6px 12px;
+    margin: 2px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+.add-btn {
+    background: #00ff88;
+}
+
+
+.test-btn {
+    background: #0088ff;
+    color: white;
+}
+
+
+.edit-btn {
+    background: orange;
+}
+
+
+.status-btn {
+    background: #666;
+    color: white;
+}
+
+
+.delete-btn {
+    background: #ff3333;
+    color: white;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>
+🚀 TBana Stream Dashboard
+</h1>
+
+
+<h2>
+🎁 Event Manager
+</h2>
+
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>
+Active
+</th>
+
+
+<th>
+Gift
+</th>
+
+
+<th>
+Sound
+</th>
+
+
+<th>
+Overlay
+</th>
+
+
+<th>
+Actions
+</th>
+
+
+</tr>
+
+</thead>
+
+
+<tbody id="gifts">
+
+<tr>
+
+<td colspan="5">
+Loading...
+</td>
+
+</tr>
+
+
+</tbody>
+
+
+</table>
+
+
+<hr>
+
+
+
+<h2>
+🎁 Smart Queue Monitor
+</h2>
+
+
+<div id="queue-monitor">
+
+Loading queue...
+
+</div>
+
+<hr>
+
+
+<h2>
+➕ Create Gift Event
+</h2>
+
+
+<input
+id="gift_name"
+placeholder="Gift Name">
+
+
+<input
+id="sound"
+placeholder="Sound file">
+
+
+<input
+id="overlay"
+placeholder="Overlay name">
+
+
+<button
+class="add-btn"
+onclick="addGift()">
+
+Add Event
+
+</button>
+
+
+<script>
+
+
+let currentGifts = [];
+
+
+async function loadGifts() {
+
+
+    const response =
+        await fetch(
+            "/api/gifts"
+        );
+
+
+    const data =
+        await response.json();
+
+
+    currentGifts =
+        data.gifts;
+
+
+    let html = "";
+    for (const gift of currentGifts) {
+
+        html += `
+        <tr>
+
+        <td>
+        ${gift.enabled ? "🟢" : "🔴"}
+
+        <button
+        class="status-btn"
+        onclick="toggleStatus(${gift.id}, ${gift.enabled})">
+
+        ${gift.enabled ? "OFF" : "ON"}
+
+        </button>
+        </td>
+
+
+        <td>
+        🎁 ${gift.gift_name}
+        </td>
+
+
+        <td>
+        ${gift.sound}
+        </td>
+
+
+        <td>
+        ${gift.overlay}
+        </td>
+
+
+        <td>
+
+        <button
+        class="test-btn"
+        onclick="testGift('${gift.gift_name}')">
+        🧪
+        </button>
+
+
+        <button
+        class="edit-btn"
+        onclick="editGift(${gift.id})">
+        ✏
+        </button>
+
+
+        <button
+        class="delete-btn"
+        onclick="deleteGift(${gift.id})">
+        🗑
+        </button>
+
+
+        </td>
+
+
+        </tr>
+        `;
+    }
+
+
+    document
+        .getElementById("gifts")
+        .innerHTML = html;
+
+}
+
+
+
+async function addGift() {
+
+    const gift = {
+
+        gift_name:
+        document.getElementById("gift_name").value,
+
+        sound:
+        document.getElementById("sound").value,
+
+        overlay:
+        document.getElementById("overlay").value,
+
+    };
+
+
+    const response = await fetch(
+        "/api/gifts",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                "application/json"
+            },
+
+            body:
+            JSON.stringify(gift)
+        }
+    );
+
+
+    if (response.ok) {
+
+        loadGifts();
+
+    } else {
+
+        alert("Add failed");
+
+    }
+
+}
+
+
+
+async function testGift(name) {
+
+    await fetch(
+        "/api/test/gift",
+        {
+            method: "POST",
+
+            headers: {
+                "Content-Type":
+                "application/json"
+            },
+
+            body:
+            JSON.stringify({
+                user: "Dashboard Test",
+                gift_name: name,
+                count: 1,
+            })
+        }
+    );
+
+}
+
+
+
+async function editGift(id) {
+
+    const gift =
+        currentGifts.find(
+            item => item.id === id
+        );
+
+
+    const newName =
+        prompt(
+            "Gift Name",
+            gift.gift_name
+        );
+
+
+    if (newName === null) return;
+
+
+    const newSound =
+        prompt(
+            "Sound",
+            gift.sound
+        );
+
+
+    if (newSound === null) return;
+
+
+    const newOverlay =
+        prompt(
+            "Overlay",
+            gift.overlay
+        );
+
+
+    if (newOverlay === null) return;
+
+
+    const response =
+        await fetch(
+            `/api/gifts/${id}`,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type":
+                    "application/json"
+                },
+
+                body:
+                JSON.stringify({
+                    gift_name: newName,
+                    sound: newSound,
+                    overlay: newOverlay,
+                })
+            }
+        );
+
+
+    if (response.ok) {
+
+        loadGifts();
+
+    }
+
+}
+
+
+
+async function toggleStatus(
+    id,
+    status
+) {
+
+    const response =
+        await fetch(
+            `/api/gifts/${id}/status`,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type":
+                    "application/json"
+                },
+
+                body:
+                JSON.stringify({
+                    enabled: !status
+                })
+            }
+        );
+
+
+    if (response.ok) {
+
+        loadGifts();
+
+    }
+
+}
+
+
+
+async function deleteGift(id) {
+
+    if (!confirm(
+        "Delete event?"
+    )) {
+        return;
+    }
+
+
+    const response =
+        await fetch(
+            `/api/gifts/${id}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+
+    if (response.ok) {
+
+        loadGifts();
+
+    }
+
+}
+
+
+loadGifts();
+
+
+</script>
+
+
+</body>
+
+
+</html>

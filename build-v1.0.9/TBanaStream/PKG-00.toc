@@ -1,0 +1,72 @@
+('C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+ '(Merged)\\build-v1.0.9\\TBanaStream\\TBana Stream.pkg',
+ {'BINARY': True,
+  'DATA': True,
+  'EXECUTABLE': True,
+  'EXTENSION': True,
+  'PYMODULE': True,
+  'PYSOURCE': True,
+  'PYZ': False,
+  'SPLASH': True,
+  'SYMLINK': False},
+ [('pyi-contents-directory _internal', '', 'OPTION'),
+  ('PYZ-00.pyz',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\build-v1.0.9\\TBanaStream\\PYZ-00.pyz',
+   'PYZ'),
+  ('struct',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\build-v1.0.9\\TBanaStream\\localpycs\\struct.pyc',
+   'PYMODULE'),
+  ('pyimod01_archive',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\build-v1.0.9\\TBanaStream\\localpycs\\pyimod01_archive.pyc',
+   'PYMODULE'),
+  ('pyimod02_importers',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\build-v1.0.9\\TBanaStream\\localpycs\\pyimod02_importers.pyc',
+   'PYMODULE'),
+  ('pyimod03_ctypes',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\build-v1.0.9\\TBanaStream\\localpycs\\pyimod03_ctypes.pyc',
+   'PYMODULE'),
+  ('pyimod04_pywin32',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\build-v1.0.9\\TBanaStream\\localpycs\\pyimod04_pywin32.pyc',
+   'PYMODULE'),
+  ('pyiboot01_bootstrap',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\.venv\\Lib\\site-packages\\PyInstaller\\loader\\pyiboot01_bootstrap.py',
+   'PYSOURCE'),
+  ('pyi_rth_inspect',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_inspect.py',
+   'PYSOURCE'),
+  ('pyi_rth_pkgutil',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_pkgutil.py',
+   'PYSOURCE'),
+  ('pyi_rth_multiprocessing',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_multiprocessing.py',
+   'PYSOURCE'),
+  ('pyi_rth_setuptools',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth_setuptools.py',
+   'PYSOURCE'),
+  ('pyi_rth__tkinter',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\.venv\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth__tkinter.py',
+   'PYSOURCE'),
+  ('desktop_launcher',
+   'C:\\Users\\Plus\\OneDrive\\Apps\\Merge\\TBana Stream '
+   '(Merged)\\app\\desktop_launcher.py',
+   'PYSOURCE')],
+ 'python313.dll',
+ True,
+ False,
+ False,
+ [],
+ None,
+ None,
+ None)

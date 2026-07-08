@@ -19,6 +19,10 @@ from app.core.events import (
 from app.rules.event_engine import (
     event_engine,
 )
+from app.widgets.goal import (
+    broadcast_like_goal,
+    reset_like_goal,
+)
 
 from app.tiktok.log_manager import (
     add_log,
@@ -556,6 +560,11 @@ class TikTokConnector:
                 }
             )
 
+            broadcast_like_goal(
+                event.user.nickname,
+                event.count,
+            )
+
             result = event_engine.process(
                 live_event
             )
@@ -603,6 +612,7 @@ class TikTokConnector:
         try:
 
             event_engine.reset_live_session()
+            reset_like_goal()
 
             print(
                 "Starting TikTok listener:",
@@ -644,6 +654,7 @@ class TikTokConnector:
 
         await self.client.disconnect()
         event_engine.reset_live_session()
+        reset_like_goal()
 
         self.status = "OFFLINE"
 

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>TBana Stream !spin Overlay</title>
+
+    <link rel="stylesheet" href="style.css?v=1.0.9-spin-rarity-v3">
+</head>
+
+<body class="spin-only-overlay">
+
+    <div id="spin-notice" class="spin-notice hidden">
+        <strong>!spin</strong>
+        <span id="spin-notice-message"></span>
+    </div>
+
+    <div id="spin-widget" class="spin-widget hidden">
+
+        <div class="spin-card">
+
+            <div class="spin-header">
+                <span id="spin-user">Viewer</span>
+                <strong>!spin</strong>
+            </div>
+
+            <div class="spin-stage">
+                <div id="spin-wheel" class="spin-wheel">
+                </div>
+                <div class="spin-stage-center">
+                    <div class="spin-viewer-frame">
+                        <img
+                            id="spin-viewer-avatar"
+                            class="spin-viewer-avatar hidden"
+                            alt="Viewer avatar"
+                        >
+                        <span
+                            id="spin-viewer-fallback"
+                            class="spin-viewer-fallback"
+                        >V</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="spin-result">
+                <span>Result</span>
+                <strong id="spin-result">...</strong>
+                <small
+                    id="spin-result-rarity"
+                    class="spin-result-rarity rarity-common hidden"
+                >COMMON</small>
+            </div>
+
+            <div class="spin-brand">
+                <img
+                    src="/dashboard/tibanakstream-logo-cropped.png"
+                    alt=""
+                >
+                <span>by TBana Stream</span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script src="app.js?v=1.0.9-spin-rarity-v3"></script>
+
+</body>
+
+</html>

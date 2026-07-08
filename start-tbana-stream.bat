@@ -5,6 +5,12 @@ cd /d "%~dp0"
 title TBana Stream
 set "PYGAME_HIDE_SUPPORT_PROMPT=1"
 
+if exist "desktop.env" (
+    for /f "usebackq eol=# tokens=1,* delims==" %%A in ("desktop.env") do (
+        if not "%%A"=="" if not defined %%A set "%%A=%%B"
+    )
+)
+
 echo.
 echo ==========================================
 echo             TBana Stream

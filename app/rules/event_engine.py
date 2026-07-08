@@ -3,6 +3,7 @@
 import json
 import random
 import time
+from urllib.parse import quote
 
 from app.core.events import LiveEvent
 
@@ -960,9 +961,14 @@ class EventEngine:
 
         if action_type == "webhook":
 
+            webhook_value = self.render_webhook_value(
+                event,
+                action_value,
+            )
+
             return {
                 "type": "webhook",
-                "url": action_value,
+                "url": webhook_value,
             }
 
 
@@ -1066,5 +1072,77 @@ class EventEngine:
             )
 
         return text
+
+    @staticmethod
+    def render_webhook_value(
+        event: LiveEvent,
+        action_value: str,
+    ) -> str:
+
+        """Replace live-event placeholders in webhook URLs."""
+
+        count = event.data.get(
+            "count",
+            "",
+        )
+
+        replacements = {
+            "{username}": event.user or "",
+            "{nickname}": event.user or "",
+            "{user}": event.user or "",
+            "{event}": event.event_type,
+            "{comment}": event.data.get(
+                "comment",
+                "",
+            ),
+            "{giftname}": event.data.get(
+                "gift_name",
+                "",
+            ),
+            "{gift}": event.data.get(
+                "gift_name",
+                "",
+            ),
+            "{repeatcount}": count,
+            "{count}": count,
+            "{likecount}": event.data.get(
+                "like_count",
+                count,
+            ),
+            "{totallikecount}": event.data.get(
+                "total_like_count",
+                event.data.get(
+                    "totalLikeCount",
+                    "",
+                ),
+            ),
+            "{coins}": event.data.get(
+                "coins",
+                event.data.get(
+                    "diamond_count",
+                    "",
+                ),
+            ),
+        }
+
+        url = str(
+            action_value
+            or
+            ""
+        )
+
+        for placeholder, value in replacements.items():
+
+            url = url.replace(
+                placeholder,
+                quote(
+                    str(
+                        value
+                    ),
+                    safe="",
+                ),
+            )
+
+        return url
 
 event_engine = EventEngine()

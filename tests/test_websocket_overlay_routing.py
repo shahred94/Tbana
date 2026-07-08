@@ -24,6 +24,7 @@ class OverlayRoutingTest(unittest.TestCase):
             manager = WebSocketManager()
             screen_overlay = FakeWebSocket()
             spin_overlay = FakeWebSocket()
+            goal_overlay = FakeWebSocket()
 
             await manager.connect(
                 screen_overlay,
@@ -34,6 +35,11 @@ class OverlayRoutingTest(unittest.TestCase):
                 spin_overlay,
                 "1",
                 "spin",
+            )
+            await manager.connect(
+                goal_overlay,
+                "1",
+                "goal",
             )
 
             await manager.broadcast({
@@ -51,6 +57,10 @@ class OverlayRoutingTest(unittest.TestCase):
                 len(spin_overlay.messages),
                 1,
             )
+            self.assertEqual(
+                goal_overlay.messages,
+                [],
+            )
 
             await manager.broadcast({
                 "type": "overlay",
@@ -66,6 +76,31 @@ class OverlayRoutingTest(unittest.TestCase):
                 len(spin_overlay.messages),
                 1,
             )
+            self.assertEqual(
+                goal_overlay.messages,
+                [],
+            )
+
+            await manager.broadcast({
+                "type": "goal",
+                "name": "likes",
+                "data": {
+                    "total": 100,
+                },
+            })
+
+            self.assertEqual(
+                len(screen_overlay.messages),
+                1,
+            )
+            self.assertEqual(
+                len(spin_overlay.messages),
+                1,
+            )
+            self.assertEqual(
+                len(goal_overlay.messages),
+                1,
+            )
 
             status = manager.get_overlay_status()
             self.assertEqual(
@@ -74,6 +109,10 @@ class OverlayRoutingTest(unittest.TestCase):
             )
             self.assertEqual(
                 status["spin_connections"],
+                1,
+            )
+            self.assertEqual(
+                status["goal_connections"],
                 1,
             )
 
