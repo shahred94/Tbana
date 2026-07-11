@@ -587,6 +587,7 @@ function showSpinNotice(data) {
 let socket = null;
 let pingTimer = null;
 let goalTotal = 0;
+let goalServerState = null;
 
 
 function goalSettings() {
@@ -643,21 +644,42 @@ function renderGoal(total) {
     );
 
     const visibleTotal =
+        Number(
+            goalServerState?.visible_total
+        )
+        ||
         settings.start + goalTotal;
+    const target =
+        Math.max(
+            1,
+            Number(
+                goalServerState?.target
+            )
+            ||
+            settings.target
+        );
     const percent = Math.min(
         100,
-        (visibleTotal / settings.target) * 100
+        (visibleTotal / target) * 100
     );
 
-    goalTitle.innerText = settings.title.toUpperCase();
+    goalTitle.innerText = (
+        goalServerState?.title
+        ||
+        settings.title
+    ).toUpperCase();
     goalCount.innerText =
         `${formatGoalNumber(visibleTotal)} / ` +
-        formatGoalNumber(settings.target);
-    goalLabel.innerText = settings.label.toUpperCase();
+        formatGoalNumber(target);
+    goalLabel.innerText = (
+        goalServerState?.label
+        ||
+        settings.label
+    ).toUpperCase();
     goalProgress.style.width = `${percent}%`;
     goalWidget.classList.toggle(
         "goal-complete",
-        visibleTotal >= settings.target
+        visibleTotal >= target
     );
 }
 
@@ -672,6 +694,15 @@ function handleGoalMessage(data) {
     const total = Number(
         data.total ?? data.total_like_count ?? data.like_count
     );
+
+    goalServerState = {
+        ...(
+            goalServerState
+            ||
+            {}
+        ),
+        ...data,
+    };
 
     if (Number.isFinite(total)) {
 
@@ -707,6 +738,41 @@ function startGoalDemo() {
         });
 
     }, 1200);
+}
+
+
+async function loadGoalStatus() {
+
+    if (!goalOnlyOverlay) {
+
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/goal/status"
+            );
+        const data =
+            await response.json();
+
+        goalServerState = data;
+        renderGoal(
+            Number(
+                data.total
+            )
+            ||
+            0
+        );
+
+    } catch (error) {
+
+        renderGoal(
+            goalTotal
+        );
+
+    }
 }
 
 
@@ -864,5 +930,6 @@ function connectWebSocket() {
 
 // Start connection
 renderGoal(0);
+loadGoalStatus();
 startGoalDemo();
 connectWebSocket();

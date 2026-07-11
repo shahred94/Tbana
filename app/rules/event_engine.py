@@ -2,6 +2,7 @@
 
 import json
 import random
+import threading
 import time
 from urllib.parse import quote
 
@@ -12,6 +13,7 @@ from app.storage.sqlite_store import (
     get_action_presets,
     get_action_steps,
     normalize_gift_name,
+    get_setting,
 )
 
 from app.actions.executor import (
@@ -23,6 +25,7 @@ from app.queue.manager import (
 )
 
 from app.widgets.spin import (
+    spin_command,
     trigger_spin_command,
 )
 from app.core.activity import activity_feed
@@ -30,6 +33,12 @@ from app.core.activity import activity_feed
 class EventEngine:
     """Process dynamic events."""
 
+    COMBO_SOUND_STAGGER_SECONDS = 0.08
+
+    IMMEDIATE_STEP_TYPES = {
+        "keyboard",
+        "webhook",
+    }
 
     def __init__(self):
 
@@ -152,11 +161,13 @@ class EventEngine:
                         "trigger_value",
                         "",
                     )
-                ).strip().lower().startswith("!spin")
+                ).strip().lower().startswith(
+                    spin_command()
+                )
             ):
 
-                # The built-in wheel owns !spin. Its linked action runs only
-                # after the animation; generic triggers would fire too early.
+                # The built-in wheel owns this command. Its linked action runs
+                # only after the animation; generic triggers would fire too early.
                 continue
 
 
@@ -283,6 +294,23 @@ class EventEngine:
                             "duration",
                             0,
                         )
+
+                        action[
+                            "execution_type"
+                        ] = action_preset.get(
+                            "execution_type",
+                            "auto",
+                        )
+
+                        try:
+                            action["stagger_delay_ms"] = max(
+                                0,
+                                min(10000, int(get_setting(
+                                    f"action_stagger_delay_ms:{action_id}"
+                                ) or 100)),
+                            )
+                        except (TypeError, ValueError):
+                            action["stagger_delay_ms"] = 100
 
                         action[
                             "_step_id"
@@ -758,31 +786,88 @@ class EventEngine:
             )
         ):
 
+            action_groups = self.group_actions_by_preset(
+                actions
+            )
+
+            queued_groups = []
+
+            for action_group in action_groups:
+
+                execution_type = self.action_execution_type(
+                    action_group
+                )
+
+                if execution_type in {
+                    "instant",
+                    "staggered",
+                }:
+
+                    for repeat_index in range(
+                        execution_count
+                    ):
+
+                        if execution_type == "staggered":
+                            delay_ms = self.action_stagger_delay_ms(action_group)
+                            timer = threading.Timer(
+                                repeat_index * delay_ms / 1000,
+                                self.execute_action_group,
+                                args=(action_group, repeat_index, execution_count, "[STAGGERED]"),
+                            )
+                            timer.daemon = True
+                            timer.start()
+                        else:
+                            self.execute_action_group(
+                                action_group,
+                                repeat_index,
+                                execution_count,
+                                log_prefix="[EVENT_ENGINE]",
+                            )
+
+                    print(
+                        "[EVENT_ENGINE] Ran gift actions immediately:",
+                        item["trigger_value"],
+                        execution_type,
+                        "x",
+                        execution_count,
+                        action_group,
+                    )
+
+                    continue
+
+                queued_groups.append(
+                    action_group
+                )
+
             for repeat_index in range(
                 execution_count
             ):
 
-                gift_queue_manager.add_job_sync(
-                    item["trigger_value"],
-                    {
-                        "user": event.user,
-                        "actions": actions,
-                        "combo_index": (
-                            repeat_index + 1
-                        ),
-                        "combo_count": (
-                            execution_count
-                        ),
-                    },
-                )
+                for action_group in queued_groups:
 
-            print(
-                "[EVENT_ENGINE] Queued gift actions:",
-                item["trigger_value"],
-                "x",
-                execution_count,
-                actions
-            )
+                    gift_queue_manager.add_job_sync(
+                        item["trigger_value"],
+                        {
+                            "user": event.user,
+                            "actions": action_group,
+                            "combo_index": (
+                                repeat_index + 1
+                            ),
+                            "combo_count": (
+                                execution_count
+                            ),
+                        },
+                    )
+
+            if queued_groups:
+
+                print(
+                    "[EVENT_ENGINE] Queued gift actions:",
+                    item["trigger_value"],
+                    "x",
+                    execution_count,
+                    queued_groups
+                )
 
             return
 
@@ -791,52 +876,215 @@ class EventEngine:
             execution_count
         ):
 
-            max_duration = self.action_max_duration(
-                actions
+            self.execute_action_group(
+                actions,
+                repeat_index,
+                execution_count,
+                log_prefix="[EVENT_ENGINE]",
             )
 
-            deadline = (
-                time.monotonic() + max_duration
-                if max_duration > 0
-                else None
-            )
+    def execute_action_group(
+        self,
+        actions: list[dict],
+        repeat_index: int,
+        execution_count: int,
+        log_prefix: str,
+    ) -> None:
 
-            for action in actions:
+        """Execute one action preset group."""
 
-                if (
-                    deadline is not None
-                    and
-                    time.monotonic() >= deadline
-                ):
+        max_duration = self.action_max_duration(
+            actions
+        )
 
-                    print(
-                        "[EVENT_ENGINE] Action duration reached; skipping remaining steps."
-                    )
+        deadline = (
+            time.monotonic() + max_duration
+            if max_duration > 0
+            else None
+        )
 
-                    break
+        for action in actions:
+
+            if (
+                deadline is not None
+                and
+                time.monotonic() >= deadline
+            ):
 
                 print(
-                    "[EVENT_ENGINE] Executing action_step:",
-                    action.get(
-                        "_step_order"
-                    ),
-                    action.get(
-                        "type"
-                    ),
-                    "from",
-                    action.get(
-                        "_action_preset_name"
-                    ),
-                    "combo",
-                    repeat_index + 1,
-                    "of",
-                    execution_count,
+                    log_prefix,
+                    "Action duration reached; skipping remaining steps."
                 )
 
-                action_executor.execute(
-                    action,
-                    deadline=deadline,
+                break
+
+            print(
+                log_prefix,
+                "Executing action_step:",
+                action.get(
+                    "_step_order"
+                ),
+                action.get(
+                    "type"
+                ),
+                "from",
+                action.get(
+                    "_action_preset_name"
+                ),
+                "combo",
+                repeat_index + 1,
+                "of",
+                execution_count,
+            )
+
+            execution_action = {
+                **action,
+                "_combo_index": repeat_index + 1,
+                "_combo_count": execution_count,
+            }
+
+            if (
+                execution_action.get(
+                    "type"
                 )
+                ==
+                "sound"
+                and
+                execution_count > 1
+            ):
+
+                execution_action[
+                    "_sound_start_delay"
+                ] = (
+                    repeat_index
+                    *
+                    self.COMBO_SOUND_STAGGER_SECONDS
+                )
+
+            action_executor.execute(
+                execution_action,
+                deadline=deadline,
+            )
+
+    def group_actions_by_preset(
+        self,
+        actions: list[dict],
+    ) -> list[list[dict]]:
+
+        """Keep each action preset together when deciding queue behavior."""
+
+        groups = []
+        current_group = []
+        current_key = None
+
+        for action in actions:
+
+            action_key = (
+                action.get(
+                    "_action_preset_id"
+                ),
+                action.get(
+                    "_action_preset_name"
+                ),
+            )
+
+            if (
+                current_group
+                and
+                action_key != current_key
+            ):
+
+                groups.append(
+                    current_group
+                )
+
+                current_group = []
+
+            current_key = action_key
+            current_group.append(
+                action
+            )
+
+        if current_group:
+
+            groups.append(
+                current_group
+            )
+
+        return groups
+
+    def action_execution_type(
+        self,
+        actions: list[dict],
+    ) -> str:
+
+        """Classify action groups for gift execution."""
+
+        for action in actions:
+
+            execution_type = str(
+                action.get(
+                    "execution_type",
+                    "",
+                )
+                or
+                ""
+            ).lower().strip()
+
+            if execution_type in {
+                "instant",
+                "staggered",
+                "long",
+                "cinematic",
+                "queue",
+                "queued",
+            }:
+
+                if execution_type in {
+                    "queue",
+                    "queued",
+                }:
+
+                    return "long"
+
+                return execution_type
+
+        step_types = {
+            str(
+                action.get(
+                    "type",
+                    "",
+                )
+            ).lower().strip()
+            for action in actions
+        }
+
+        duration = self.action_max_duration(actions)
+        has_short_sound = (
+            "sound" in step_types
+            and 0 < duration <= 2
+        )
+        auto_instant_types = set(self.IMMEDIATE_STEP_TYPES)
+        if has_short_sound:
+            auto_instant_types.add("sound")
+
+        if (
+            step_types
+            and step_types.issubset(auto_instant_types)
+        ):
+
+            return "instant"
+
+        return "long"
+
+    @staticmethod
+    def action_stagger_delay_ms(actions: list[dict]) -> int:
+        for action in actions:
+            try:
+                return max(0, min(10000, int(action.get("stagger_delay_ms", 100))))
+            except (TypeError, ValueError):
+                pass
+        return 100
 
     @staticmethod
     def action_max_duration(
@@ -969,6 +1217,9 @@ class EventEngine:
             return {
                 "type": "webhook",
                 "url": webhook_value,
+                "payload": self.webhook_payload(
+                    event
+                ),
             }
 
 
@@ -1144,5 +1395,73 @@ class EventEngine:
             )
 
         return url
+
+    @staticmethod
+    def webhook_payload(
+        event: LiveEvent,
+    ) -> dict:
+
+        """Build TikFinity-style form data for local webhook receivers."""
+
+        count = event.data.get(
+            "count",
+            "",
+        )
+
+        username = (
+            event.data.get(
+                "username"
+            )
+            or
+            event.data.get(
+                "unique_id"
+            )
+            or
+            event.data.get(
+                "uniqueId"
+            )
+            or
+            event.user
+            or
+            ""
+        )
+
+        nickname = (
+            event.data.get(
+                "nickname"
+            )
+            or
+            event.user
+            or
+            username
+        )
+
+        return {
+            "username": username,
+            "nickname": nickname,
+            "user": username,
+            "event": event.event_type,
+            "comment": event.data.get(
+                "comment",
+                "",
+            ),
+            "giftname": event.data.get(
+                "gift_name",
+                "",
+            ),
+            "gift": event.data.get(
+                "gift_name",
+                "",
+            ),
+            "repeatcount": count,
+            "count": count,
+            "coins": event.data.get(
+                "coins",
+                event.data.get(
+                    "diamond_count",
+                    "",
+                ),
+            ),
+        }
 
 event_engine = EventEngine()

@@ -2,4 +2,4 @@ Cara create Installer.exe
 
 cd "C:\Users\Plus\OneDrive\Apps\Merge\TBana Stream (Merged)"
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\build-windows.ps1" -Version "1.0.9"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\build-windows.ps1" -Version "1.1.1"

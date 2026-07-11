@@ -7,6 +7,7 @@ from TikTokLive import TikTokLiveClient
 from TikTokLive.events import (
     ConnectEvent,
     CommentEvent,
+    EmoteChatEvent,
     GiftEvent,
     LikeEvent,
     FollowEvent,
@@ -27,6 +28,7 @@ from app.widgets.goal import (
 from app.tiktok.log_manager import (
     add_log,
 )
+from app.tts.chat import chat_tts_service
 
 
 def _read_attr(
@@ -392,14 +394,34 @@ class TikTokConnector:
                 "COMMENT"
             )
 
+            metadata = viewer_metadata(event.user)
+
+            chat_tts_service.submit(
+                nickname=event.user.nickname,
+                username=_read_attr(event.user, "unique_id", "uniqueId") or event.user.nickname,
+                comment=event.comment,
+                metadata=metadata,
+            )
+
             live_event = LiveEvent(
                 event_type="COMMENT",
                 user=event.user.nickname,
                 data={
+                    "username": _read_attr(
+                        event.user,
+                        "unique_id",
+                        "uniqueId",
+                    )
+                    or event.user.nickname,
+                    "unique_id": _read_attr(
+                        event.user,
+                        "unique_id",
+                        "uniqueId",
+                    )
+                    or "",
+                    "nickname": event.user.nickname,
                     "comment": event.comment,
-                    **viewer_metadata(
-                        event.user
-                    ),
+                    **metadata,
                 }
             )
 
@@ -416,6 +438,7 @@ class TikTokConnector:
                 spin_result.get(
                     "reply"
                 )
+
             ):
 
                 add_log(
@@ -429,6 +452,40 @@ class TikTokConnector:
             print(
                 "Actions:",
                 result
+            )
+
+
+        @self.client.on(EmoteChatEvent)
+        async def on_emote_chat(event):
+            """Convert TikTok custom/subscriber emotes into Action events."""
+
+            user = event.user
+            nickname = _read_attr(user, "nickname") or "TikTok Viewer"
+            username = _read_attr(user, "unique_id", "uniqueId") or nickname
+            emotes = []
+            for emote in list(_read_attr(event, "emote_list") or []):
+                value = (
+                    _read_attr(emote, "emote_name", "name", "display_name", "id")
+                    or str(emote)
+                )
+                if value:
+                    emotes.append(str(value))
+
+            emote_name = ", ".join(emotes) or "Custom Emote"
+            add_log(f"EMOTE {nickname}: {emote_name}", "COMMENT")
+            event_engine.process(
+                LiveEvent(
+                    event_type="SUBSCRIBER_EMOTE",
+                    user=nickname,
+                    data={
+                        "username": username,
+                        "unique_id": username,
+                        "nickname": nickname,
+                        "emote": emote_name,
+                        "emotes": emotes,
+                        **viewer_metadata(user),
+                    },
+                )
             )
 
 
@@ -513,6 +570,19 @@ class TikTokConnector:
                 event_type="GIFT",
                 user=event.user.nickname,
                 data={
+                    "username": _read_attr(
+                        event.user,
+                        "unique_id",
+                        "uniqueId",
+                    )
+                    or event.user.nickname,
+                    "unique_id": _read_attr(
+                        event.user,
+                        "unique_id",
+                        "uniqueId",
+                    )
+                    or "",
+                    "nickname": event.user.nickname,
                     "gift_name": gift_name,
                     "count": repeat_count,
                     "diamond_count": diamond_count,
@@ -556,6 +626,19 @@ class TikTokConnector:
                 event_type="LIKE",
                 user=event.user.nickname,
                 data={
+                    "username": _read_attr(
+                        event.user,
+                        "unique_id",
+                        "uniqueId",
+                    )
+                    or event.user.nickname,
+                    "unique_id": _read_attr(
+                        event.user,
+                        "unique_id",
+                        "uniqueId",
+                    )
+                    or "",
+                    "nickname": event.user.nickname,
                     "count": event.count
                 }
             )
@@ -592,7 +675,21 @@ class TikTokConnector:
             live_event = LiveEvent(
                 event_type="FOLLOW",
                 user=event.user.nickname,
-                data={}
+                data={
+                    "username": _read_attr(
+                        event.user,
+                        "unique_id",
+                        "uniqueId",
+                    )
+                    or event.user.nickname,
+                    "unique_id": _read_attr(
+                        event.user,
+                        "unique_id",
+                        "uniqueId",
+                    )
+                    or "",
+                    "nickname": event.user.nickname,
+                }
             )
 
             result = event_engine.process(

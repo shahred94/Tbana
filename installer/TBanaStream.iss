@@ -1,9 +1,9 @@
 #define MyAppName "TBana Stream"
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.9"
+  #define MyAppVersion "1.1.1"
 #endif
 #ifndef MyDistDir
-  #define MyDistDir "dist-v1.0.9"
+  #define MyDistDir "dist-v1.1.1"
 #endif
 #define MyAppPublisher "TBana Stream"
 #define MyAppExeName "TBana Stream.exe"

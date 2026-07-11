@@ -430,7 +430,9 @@ def initialize_database() -> None:
 
                 repeat_gift_combos INTEGER DEFAULT 0,
 
-                skip_on_next_action INTEGER DEFAULT 0
+                skip_on_next_action INTEGER DEFAULT 0,
+
+                execution_type TEXT DEFAULT 'auto'
             )
             """
         )
@@ -450,6 +452,8 @@ def initialize_database() -> None:
             "ADD COLUMN repeat_gift_combos INTEGER DEFAULT 0",
             "ALTER TABLE action_presets "
             "ADD COLUMN skip_on_next_action INTEGER DEFAULT 0",
+            "ALTER TABLE action_presets "
+            "ADD COLUMN execution_type TEXT DEFAULT 'auto'",
         ):
 
             try:
@@ -1378,6 +1382,44 @@ def delete_event_action(
 # Action Presets V2
 # ==================================================
 
+ACTION_EXECUTION_TYPES = {
+    "auto",
+    "instant",
+    "staggered",
+    "queued",
+}
+
+
+def normalize_action_execution_type(
+    execution_type: str | None,
+) -> str:
+    """Return a supported action execution type."""
+
+    value = str(
+        execution_type
+        or
+        "auto"
+    ).strip().lower()
+
+    if value in {
+        "queue",
+        "long",
+        "cinematic",
+    }:
+
+        return "queued"
+
+    if value == "buff":
+
+        return "instant"
+
+    if value not in ACTION_EXECUTION_TYPES:
+
+        return "auto"
+
+    return value
+
+
 def get_action_presets() -> list[dict]:
     """Get all action presets."""
 
@@ -1399,7 +1441,8 @@ def get_action_presets() -> list[dict]:
                 user_cooldown,
                 fade_enabled,
                 repeat_gift_combos,
-                skip_on_next_action
+                skip_on_next_action,
+                execution_type
             FROM action_presets
             ORDER BY id
             """
@@ -1421,6 +1464,7 @@ def get_action_presets() -> list[dict]:
                 "fade_enabled": bool(row[9]),
                 "repeat_gift_combos": bool(row[10]),
                 "skip_on_next_action": bool(row[11]),
+                "execution_type": normalize_action_execution_type(row[12]),
             }
             for row in rows
         ]
@@ -1437,6 +1481,7 @@ def create_action_preset(
     fade_enabled: bool = False,
     repeat_gift_combos: bool = False,
     skip_on_next_action: bool = False,
+    execution_type: str = "auto",
 ) -> int:
     """Create a new action preset."""
 
@@ -1455,10 +1500,11 @@ def create_action_preset(
                 user_cooldown,
                 fade_enabled,
                 repeat_gift_combos,
-                skip_on_next_action
+                skip_on_next_action,
+                execution_type
             )
             VALUES
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 name,
@@ -1471,6 +1517,9 @@ def create_action_preset(
                 int(fade_enabled),
                 int(repeat_gift_combos),
                 int(skip_on_next_action),
+                normalize_action_execution_type(
+                    execution_type
+                ),
             )
         )
 
@@ -1490,6 +1539,7 @@ def update_action_preset(
     fade_enabled: bool = False,
     repeat_gift_combos: bool = False,
     skip_on_next_action: bool = False,
+    execution_type: str = "auto",
 ) -> None:
     """Update action preset."""
 
@@ -1508,7 +1558,8 @@ def update_action_preset(
                 user_cooldown = ?,
                 fade_enabled = ?,
                 repeat_gift_combos = ?,
-                skip_on_next_action = ?
+                skip_on_next_action = ?,
+                execution_type = ?
             WHERE
                 id = ?
             """,
@@ -1523,6 +1574,9 @@ def update_action_preset(
                 int(fade_enabled),
                 int(repeat_gift_combos),
                 int(skip_on_next_action),
+                normalize_action_execution_type(
+                    execution_type
+                ),
                 action_id,
             )
         )
@@ -1897,10 +1951,11 @@ def import_configuration(
                         user_cooldown,
                         fade_enabled,
                         repeat_gift_combos,
-                        skip_on_next_action
+                        skip_on_next_action,
+                        execution_type
                     )
                     VALUES
-                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         action_id,
@@ -1962,6 +2017,11 @@ def import_configuration(
                         boolean_value(
                             action.get(
                                 "skip_on_next_action"
+                            )
+                        ),
+                        normalize_action_execution_type(
+                            action.get(
+                                "execution_type"
                             )
                         ),
                     )
@@ -2482,7 +2542,8 @@ def get_event_triggers() -> list[dict]:
                 action_presets.user_cooldown,
                 action_presets.fade_enabled,
                 action_presets.repeat_gift_combos,
-                action_presets.skip_on_next_action
+                action_presets.skip_on_next_action,
+                action_presets.execution_type
             FROM event_triggers
 
             LEFT JOIN action_presets
@@ -2515,6 +2576,7 @@ def get_event_triggers() -> list[dict]:
                 "fade_enabled": bool(row[14]),
                 "repeat_gift_combos": bool(row[15]),
                 "skip_on_next_action": bool(row[16]),
+                "execution_type": row[17] or "auto",
             }
             for row in rows
         ]

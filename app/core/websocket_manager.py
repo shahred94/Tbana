@@ -109,7 +109,7 @@ class WebSocketManager:
 
     def get_overlay_status(
         self,
-        screen_count: int = 8,
+        screen_count: int = 10,
     ) -> dict:
         """Return connected overlay clients grouped by screen."""
 

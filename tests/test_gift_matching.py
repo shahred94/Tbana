@@ -113,6 +113,409 @@ class GiftMatchingTest(unittest.TestCase):
         self.assertTrue(result["matched"])
         self.assertEqual(execute_action.call_count, 5)
 
+    def test_live_keyboard_gifts_bypass_queue(self):
+        with (
+            patch(
+                "app.auth.service.active_runtime_plan",
+                return_value="free",
+            ),
+            patch(
+                "app.auth.service.runtime_item_is_allowed",
+                return_value=True,
+            ),
+            patch(
+                "app.auth.service.runtime_allowed_item_ids",
+                return_value=None,
+            ),
+            patch(
+                "app.rules.event_engine.get_event_triggers",
+                return_value=[
+                    {
+                        "id": 1,
+                        "enabled": 1,
+                        "trigger_type": "GIFT",
+                        "trigger_value": "Rose",
+                        "user_filter": "ANY",
+                        "action_id": 7,
+                        "action_mode": "single",
+                        "action_group": "",
+                        "action": "Kickflip",
+                        "duration": 0,
+                        "media_volume": 100,
+                        "overlay_screen": 1,
+                        "global_cooldown": 0,
+                        "user_cooldown": 0,
+                        "fade_enabled": False,
+                        "repeat_gift_combos": False,
+                        "skip_on_next_action": False,
+                    },
+                    {
+                        "id": 2,
+                        "enabled": 1,
+                        "trigger_type": "GIFT",
+                        "trigger_value": "Finger Heart",
+                        "user_filter": "ANY",
+                        "action_id": 8,
+                        "action_mode": "single",
+                        "action_group": "",
+                        "action": "Nitro",
+                        "duration": 0,
+                        "media_volume": 100,
+                        "overlay_screen": 1,
+                        "global_cooldown": 0,
+                        "user_cooldown": 0,
+                        "fade_enabled": False,
+                        "repeat_gift_combos": False,
+                        "skip_on_next_action": False,
+                    },
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.get_action_presets",
+                return_value=[
+                    {
+                        "id": 7,
+                        "enabled": True,
+                        "name": "Kickflip",
+                        "duration": 0,
+                        "media_volume": 100,
+                        "execution_type": "instant",
+                    },
+                    {
+                        "id": 8,
+                        "enabled": True,
+                        "name": "Nitro",
+                        "duration": 0,
+                        "media_volume": 100,
+                        "execution_type": "buff",
+                    },
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.get_action_steps",
+                side_effect=lambda action_id: [
+                    {
+                        "id": action_id,
+                        "order": 1,
+                        "type": "KEYBOARD",
+                        "value": (
+                            "space"
+                            if action_id == 7
+                            else "n"
+                        ),
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.gift_queue_manager.add_job_sync",
+            ) as add_job,
+            patch(
+                "app.rules.event_engine.action_executor.execute",
+            ) as execute_action,
+        ):
+            rose = event_engine.process(
+                LiveEvent(
+                    event_type="gift",
+                    user="Viewer",
+                    data={
+                        "gift_name": "Rose",
+                        "count": 1,
+                    },
+                )
+            )
+            finger_heart = event_engine.process(
+                LiveEvent(
+                    event_type="gift",
+                    user="Viewer",
+                    data={
+                        "gift_name": "Finger Heart",
+                        "count": 1,
+                    },
+                )
+            )
+
+        self.assertTrue(rose["matched"])
+        self.assertTrue(finger_heart["matched"])
+        add_job.assert_not_called()
+        self.assertEqual(execute_action.call_count, 2)
+        self.assertEqual(
+            [
+                call.args[0]["key"]
+                for call in execute_action.call_args_list
+            ],
+            [
+                "space",
+                "n",
+            ],
+        )
+
+    def test_live_sound_gift_still_uses_queue(self):
+        with (
+            patch(
+                "app.auth.service.active_runtime_plan",
+                return_value="free",
+            ),
+            patch(
+                "app.auth.service.runtime_item_is_allowed",
+                return_value=True,
+            ),
+            patch(
+                "app.auth.service.runtime_allowed_item_ids",
+                return_value=None,
+            ),
+            patch(
+                "app.rules.event_engine.get_event_triggers",
+                return_value=[
+                    {
+                        "id": 1,
+                        "enabled": 1,
+                        "trigger_type": "GIFT",
+                        "trigger_value": "Rose",
+                        "user_filter": "ANY",
+                        "action_id": 7,
+                        "action_mode": "single",
+                        "action_group": "",
+                        "action": "Cinematic Rose",
+                        "duration": 3,
+                        "media_volume": 100,
+                        "overlay_screen": 1,
+                        "global_cooldown": 0,
+                        "user_cooldown": 0,
+                        "fade_enabled": False,
+                        "repeat_gift_combos": False,
+                        "skip_on_next_action": False,
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.get_action_presets",
+                return_value=[
+                    {
+                        "id": 7,
+                        "enabled": True,
+                        "name": "Cinematic Rose",
+                        "duration": 3,
+                        "media_volume": 100,
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.get_action_steps",
+                return_value=[
+                    {
+                        "id": 1,
+                        "order": 1,
+                        "type": "SOUND",
+                        "value": "rose.mp3",
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.gift_queue_manager.add_job_sync",
+            ) as add_job,
+            patch(
+                "app.rules.event_engine.action_executor.execute",
+            ) as execute_action,
+        ):
+            result = event_engine.process(
+                LiveEvent(
+                    event_type="gift",
+                    user="Viewer",
+                    data={
+                        "gift_name": "Rose",
+                        "count": 1,
+                    },
+                )
+            )
+
+        self.assertTrue(result["matched"])
+        add_job.assert_called_once()
+        execute_action.assert_not_called()
+
+    def test_instant_sound_gift_combo_retriggers_with_stagger(self):
+        with (
+            patch(
+                "app.auth.service.active_runtime_plan",
+                return_value="free",
+            ),
+            patch(
+                "app.auth.service.runtime_item_is_allowed",
+                return_value=True,
+            ),
+            patch(
+                "app.auth.service.runtime_allowed_item_ids",
+                return_value=None,
+            ),
+            patch(
+                "app.rules.event_engine.get_event_triggers",
+                return_value=[
+                    {
+                        "id": 1,
+                        "enabled": 1,
+                        "trigger_type": "GIFT",
+                        "trigger_value": "Rose",
+                        "user_filter": "ANY",
+                        "action_id": 7,
+                        "action_mode": "single",
+                        "action_group": "",
+                        "action": "Kickflip",
+                        "duration": 0,
+                        "media_volume": 100,
+                        "overlay_screen": 1,
+                        "global_cooldown": 0,
+                        "user_cooldown": 0,
+                        "fade_enabled": False,
+                        "repeat_gift_combos": False,
+                        "skip_on_next_action": False,
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.get_action_presets",
+                return_value=[
+                    {
+                        "id": 7,
+                        "enabled": True,
+                        "name": "Kickflip",
+                        "duration": 0,
+                        "media_volume": 100,
+                        "execution_type": "instant",
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.get_action_steps",
+                return_value=[
+                    {
+                        "id": 1,
+                        "order": 1,
+                        "type": "SOUND",
+                        "value": "kickflip.mp3",
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.gift_queue_manager.add_job_sync",
+            ) as add_job,
+            patch(
+                "app.rules.event_engine.action_executor.execute",
+            ) as execute_action,
+        ):
+            result = event_engine.process(
+                LiveEvent(
+                    event_type="gift",
+                    user="Viewer",
+                    data={
+                        "gift_name": "Rose",
+                        "count": 3,
+                    },
+                )
+            )
+
+        self.assertTrue(result["matched"])
+        add_job.assert_not_called()
+        self.assertEqual(
+            execute_action.call_count,
+            3,
+        )
+        self.assertEqual(
+            [
+                call.args[0].get(
+                    "_sound_start_delay"
+                )
+                for call in execute_action.call_args_list
+            ],
+            [
+                0.0,
+                0.08,
+                0.16,
+            ],
+        )
+
+    def test_live_keyboard_gift_can_be_forced_to_queue(self):
+        with (
+            patch(
+                "app.auth.service.active_runtime_plan",
+                return_value="free",
+            ),
+            patch(
+                "app.auth.service.runtime_item_is_allowed",
+                return_value=True,
+            ),
+            patch(
+                "app.auth.service.runtime_allowed_item_ids",
+                return_value=None,
+            ),
+            patch(
+                "app.rules.event_engine.get_event_triggers",
+                return_value=[
+                    {
+                        "id": 1,
+                        "enabled": 1,
+                        "trigger_type": "GIFT",
+                        "trigger_value": "Rose",
+                        "user_filter": "ANY",
+                        "action_id": 7,
+                        "action_mode": "single",
+                        "action_group": "",
+                        "action": "Queued Kickflip",
+                        "duration": 0,
+                        "media_volume": 100,
+                        "overlay_screen": 1,
+                        "global_cooldown": 0,
+                        "user_cooldown": 0,
+                        "fade_enabled": False,
+                        "repeat_gift_combos": False,
+                        "skip_on_next_action": False,
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.get_action_presets",
+                return_value=[
+                    {
+                        "id": 7,
+                        "enabled": True,
+                        "name": "Queued Kickflip",
+                        "duration": 0,
+                        "media_volume": 100,
+                        "execution_type": "queued",
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.get_action_steps",
+                return_value=[
+                    {
+                        "id": 1,
+                        "order": 1,
+                        "type": "KEYBOARD",
+                        "value": "space",
+                    }
+                ],
+            ),
+            patch(
+                "app.rules.event_engine.gift_queue_manager.add_job_sync",
+            ) as add_job,
+            patch(
+                "app.rules.event_engine.action_executor.execute",
+            ) as execute_action,
+        ):
+            result = event_engine.process(
+                LiveEvent(
+                    event_type="gift",
+                    user="Viewer",
+                    data={
+                        "gift_name": "Rose",
+                        "count": 1,
+                    },
+                )
+            )
+
+        self.assertTrue(result["matched"])
+        add_job.assert_called_once()
+        execute_action.assert_not_called()
+
     def test_follow_trigger_runs_only_once_per_live_session(self):
         event_engine.reset_live_session()
 

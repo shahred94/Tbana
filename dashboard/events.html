@@ -1835,6 +1835,85 @@ body.density-compact .queue-item {
 
 }
 
+.goal-settings-grid {
+
+    display: grid;
+    grid-template-columns: repeat(4, minmax(130px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+
+}
+
+.goal-settings-grid label {
+
+    margin: 0;
+    color: var(--muted-text);
+    font-size: 12px;
+
+}
+
+.goal-settings-grid input {
+
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 5px;
+
+}
+
+.goal-url-row {
+
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+
+}
+
+.goal-url-row .overlay-url-input {
+
+    flex: 1 1 420px;
+    min-width: 260px;
+
+}
+
+.goal-status-row {
+
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    margin: 8px 0 12px;
+
+}
+
+.goal-status-row label {
+
+    min-width: 140px;
+    margin: 0;
+    color: var(--muted-text);
+    font-size: 12px;
+
+}
+
+.goal-status-row input {
+
+    width: 140px;
+    box-sizing: border-box;
+    margin-top: 5px;
+
+}
+
+@media (max-width: 760px) {
+
+    .goal-settings-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+}
+
 .action-library-shell {
 
     border-radius: 8px;
@@ -1885,6 +1964,15 @@ body.density-compact .queue-item {
 
     padding: 2px 6px;
     font-size: 10px;
+
+}
+
+.action-library-table .inline-execution-select {
+
+    min-width: 112px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 11px;
 
 }
 
@@ -3402,6 +3490,48 @@ body.density-compact details[data-dashboard-section] {
     }
 }
 
+.chat-tts-panel .effect-option { margin: 14px 0; }
+.chat-tts-grid, .chat-tts-sliders, .chat-tts-checks {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px; margin: 14px 0;
+}
+.chat-tts-grid label, .chat-tts-sliders label {
+    display: flex; flex-direction: column; gap: 7px;
+}
+.chat-tts-grid input, .chat-tts-grid select, .chat-tts-grid textarea {
+    width: 100%; box-sizing: border-box;
+}
+.chat-tts-checks label { display: flex; align-items: center; gap: 8px; }
+.chat-tts-actions { display: flex; flex-wrap: wrap; gap: 9px; margin: 16px 0; }
+.chat-tts-sliders output { color: var(--accent-color); font-weight: 700; }
+.simulator-grid .simulate-gift-btn {
+    background: linear-gradient(135deg, #ff8a00, #ff3d71);
+    border: 1px solid #ffb347;
+    color: #ffffff;
+    font-weight: 800;
+    box-shadow: 0 0 0 1px rgba(255, 138, 0, 0.2), 0 5px 16px rgba(255, 61, 113, 0.35);
+}
+.simulator-grid .simulate-gift-btn:hover {
+    background: linear-gradient(135deg, #ff9f1c, #ff174f);
+    box-shadow: 0 0 0 2px rgba(255, 179, 71, 0.35), 0 7px 20px rgba(255, 61, 113, 0.48);
+    transform: translateY(-1px);
+}
+.execution-choice-wrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.auto-execution-description {
+    color: var(--accent-color);
+    font-size: 12px;
+    line-height: 1.3;
+    max-width: 230px;
+}
+#action-modal .event-detail-row:has(#action_overlay_screen),
+#action-modal .event-detail-row:has(#action_global_cooldown),
+#action-modal .event-detail-row:has(#action_user_cooldown),
+#action-modal .effect-option:has(#action_fade_enabled),
+#action-modal .effect-option:has(#action_repeat_gift_combos),
+#action-modal .effect-option:has(#action_skip_on_next_action),
+#action-modal .effect-option.disabled {
+    display: none !important;
+}
 </style>
 
 
@@ -3850,8 +3980,198 @@ open>
     </table>
 </div>
 
+<div class="spin-overlay-url-panel">
+    <label class="form-label" for="goal_overlay_url">
+    Like Goal Overlay URL
+    </label>
+    <div class="section-copy">
+    Edit the goal here, then copy this URL into TikTok Live Studio or OBS Browser Source. The counter updates from live TikTok likes.
+    </div>
+    <div class="goal-settings-grid">
+        <label>
+            Overlay Title
+            <input
+                id="goal_overlay_title"
+                type="text"
+                value="Like Goal"
+                oninput="updateGoalOverlayUrlField()"
+            >
+        </label>
+        <label>
+            Goal
+            <input
+                id="goal_overlay_target"
+                type="number"
+                min="1"
+                value="6000"
+                oninput="updateGoalOverlayUrlField()"
+            >
+        </label>
+        <label>
+            Label
+            <input
+                id="goal_overlay_label"
+                type="text"
+                value="Likes"
+                oninput="updateGoalOverlayUrlField()"
+            >
+        </label>
+        <label>
+            Start From
+            <input
+                id="goal_overlay_start"
+                type="number"
+                min="0"
+                value="0"
+                oninput="updateGoalOverlayUrlField()"
+            >
+        </label>
+    </div>
+    <div class="goal-settings-grid">
+        <label>
+            Action on Goal
+            <select
+                id="goal_overlay_action_id"
+                onchange="this.dataset.selectedActionId = this.value; updateGoalOverlayActionHint()"
+            >
+                <option value="">Select Action</option>
+            </select>
+        </label>
+        <div class="row-subtitle" id="goal_overlay_action_hint">
+            Select an action from Action Library to run when the like goal is reached.
+        </div>
+        <label>
+            Goal sound volume
+            <input
+                id="goal_overlay_sound_volume"
+                type="range"
+                min="0"
+                max="100"
+                value="40"
+                oninput="document.getElementById('goal_overlay_sound_volume_output').textContent = this.value + '%'"
+            >
+            <output id="goal_overlay_sound_volume_output">40%</output>
+        </label>
+    </div>
+    <div class="goal-status-row">
+        <div id="goal_overlay_status" class="row-subtitle">
+            Goal progress: loading...
+        </div>
+        <label>
+            Add Likes
+            <input
+                id="goal_overlay_add_count"
+                type="number"
+                min="1"
+                value="100"
+            >
+        </label>
+    </div>
+    <div class="goal-url-row">
+        <input
+            id="goal_overlay_url"
+            class="overlay-url-input"
+            readonly
+        >
+        <button
+            class="add-btn"
+            type="button"
+            onclick="saveGoalOverlaySettings()"
+        >
+        Save Goal
+        </button>
+        <button
+            class="test-btn"
+            type="button"
+            onclick="copyGoalOverlayUrl()"
+        >
+        Copy Goal URL
+        </button>
+        <button
+            class="edit-btn"
+            type="button"
+            onclick="openGoalOverlay()"
+        >
+        Open Preview
+        </button>
+        <button
+            class="status-btn"
+            type="button"
+            onclick="testGoalLike()"
+        >
+        Test +100 Likes
+        </button>
+        <button
+            class="test-btn"
+            type="button"
+            onclick="addGoalLikesFromDashboard()"
+        >
+        Add Likes
+        </button>
+        <button
+            class="edit-btn"
+            type="button"
+            onclick="advanceGoalFromDashboard()"
+        >
+        Next Goal
+        </button>
+        <button
+            class="danger-btn"
+            type="button"
+            onclick="resetGoalFromDashboard()"
+        >
+        Reset Goal
+        </button>
+    </div>
+</div>
+
 </div>
 </details>
+
+<details class="section-panel chat-tts-panel" data-dashboard-section="chat-tts">
+<summary class="dashboard-section-summary"><h2>
+    <span class="section-title-icon">&#128483;</span><span>TTS Chat</span>
+</h2></summary>
+<div class="dashboard-section-content">
+<div class="section-copy">Read TikTok LIVE comments automatically using a dedicated Edge TTS queue.</div>
+<label class="effect-option"><input id="chat_tts_enabled" type="checkbox"> Enable automatic TTS Chat</label>
+<div class="chat-tts-grid">
+<label>Voice<select id="chat_tts_voice"><option value="ms-MY-YasminNeural">Malay - Yasmin</option><option value="ms-MY-OsmanNeural">Malay - Osman</option></select></label>
+<label>Read comments<select id="chat_tts_comment_mode" onchange="syncChatTTSMode()"><option value="any">Any comment</option><option value="prefix">Starting with prefix</option><option value="command">Starting with command</option></select></label>
+<label id="chat_tts_prefix_field">Prefix<input id="chat_tts_prefix" value="." maxlength="10"></label>
+<label id="chat_tts_command_field">Command<input id="chat_tts_command" value="!tts" maxlength="30"></label>
+<label>Speech template<input id="chat_tts_template" value="{nickname} berkata, {comment}"><small>{nickname}, {username}, {comment}</small></label>
+<label>Maximum comment length<input id="chat_tts_max_length" type="number" min="20" max="500" value="180"></label>
+<label>Maximum pending messages<input id="chat_tts_max_queue" type="number" min="1" max="100" value="20"></label>
+</div>
+<div class="chat-tts-sliders">
+<label>Speed <output id="chat_tts_rate_output">0%</output><input id="chat_tts_rate" type="range" min="-50" max="100" value="0" oninput="updateChatTTSOutputs()"></label>
+<label>Volume <output id="chat_tts_volume_output">0%</output><input id="chat_tts_volume" type="range" min="-100" max="100" value="0" oninput="updateChatTTSOutputs()"></label>
+<label>Pitch <output id="chat_tts_pitch_output">0Hz</output><input id="chat_tts_pitch" type="range" min="-100" max="100" value="0" oninput="updateChatTTSOutputs()"></label>
+</div>
+<h3>Allowed viewers</h3>
+<div class="chat-tts-checks">
+<label><input id="chat_tts_allow_non_followers" type="checkbox"> All users / non-followers</label>
+<label><input id="chat_tts_allow_followers" type="checkbox"> Followers</label>
+<label><input id="chat_tts_allow_fan_club" type="checkbox"> Fan Club members</label>
+<label><input id="chat_tts_allow_subscribers" type="checkbox"> Subscribers</label>
+</div>
+<div class="chat-tts-grid">
+<label>Allowed usernames (optional)<textarea id="chat_tts_allowed_users" rows="3" placeholder="One per line or comma separated"></textarea></label>
+<label>Blocked usernames<textarea id="chat_tts_blocked_users" rows="3" placeholder="One per line or comma separated"></textarea></label>
+<label>Blocked words<textarea id="chat_tts_blocked_words" rows="3" placeholder="word1, word2"></textarea></label>
+</div>
+<div class="chat-tts-actions">
+<button class="add-btn" type="button" onclick="saveChatTTS()">Save TTS Chat</button>
+<button class="test-btn" type="button" onclick="testChatTTS()">Test Voice</button>
+<button class="edit-btn" type="button" onclick="skipChatTTS()">Skip Current</button>
+<button class="delete-btn" type="button" onclick="clearChatTTSQueue()">Clear Pending</button>
+</div>
+<div id="chat_tts_status" class="spin-settings-meta">Loading TTS Chat...</div>
+</div>
+</details>
+
+<hr class="secondary-section-divider">
 
 <details
 class="section-panel spin-settings-panel"
@@ -3878,6 +4198,18 @@ Link each wheel result to an Action. When viewers comment <strong>!spin</strong>
     >
     Enable !spin widget
 </label>
+
+<div class="event-detail-row">
+    <div>
+        Chat command
+    </div>
+    <input
+        id="spin_wheel_command"
+        type="text"
+        value="!spin"
+        placeholder="!spin"
+    >
+</div>
 
 <details class="spin-advanced-settings">
     <summary>
@@ -4024,7 +4356,7 @@ Chance is a weight. Example: weights 1, 2, and 7 produce 10%, 20%, and 70% proba
     </button>
     <button
         class="log-filter-btn"
-        onclick="simulateEvent('comment', { comment: '!spin', viewer_type: 'follower', is_follower: true })"
+        onclick="simulateSpinWheelCommand()"
     >
     Test !spin
     </button>
@@ -4130,6 +4462,7 @@ onchange="saveLibraryViewState(); loadActionLibrary()">
 <th>Controls</th>
 <th>Status</th>
 <th>Name</th>
+<th>Gift Execution</th>
 <th>Duration (sec.)</th>
 <th>Steps</th>
 <th>Description</th>
@@ -4137,7 +4470,7 @@ onchange="saveLibraryViewState(); loadActionLibrary()">
 </thead>
 <tbody id="action-library">
 <tr>
-<td colspan="6" class="empty-state">
+<td colspan="7" class="empty-state">
 Loading actions...
 </td>
 </tr>
@@ -4282,9 +4615,9 @@ Test delay
 id="test_delay_seconds"
 onchange="saveTestDelaySetting()">
 <option value="0">No delay</option>
+<option value="2">2 seconds</option>
 <option value="3" selected>3 seconds</option>
 <option value="5">5 seconds</option>
-<option value="10">10 seconds</option>
 </select>
 <span class="simulator-delay-hint">
 Time to Alt+Tab into your game. Applies to Test Action, Test Event and simulations.
@@ -4330,45 +4663,16 @@ Simulate 50 Likes
 
 <button
 class="log-filter-btn"
-onclick="simulateEvent('comment', { comment: '!spin', viewer_type: 'follower', is_follower: true })">
+onclick="simulateSpinWheelCommand()">
 Simulate !spin
 </button>
 
 <select id="simulator_gift">
-<option value="">Select TikTok Gift</option>
-<option value="Rose">Rose</option>
-<option value="GG">GG</option>
-<option value="You're awesome">You're awesome</option>
-<option value="Love you so much">Love you so much</option>
-<option value="Wink wink">Wink wink</option>
-<option value="Freestyle">Freestyle</option>
-<option value="Glow Stick">Glow Stick</option>
-<option value="TikTok">TikTok</option>
-<option value="Cake Slice">Cake Slice</option>
-<option value="Ice Cream Cone">Ice Cream Cone</option>
-<option value="Heart Me">Heart Me</option>
-<option value="Nasi Lemak">Nasi Lemak</option>
-<option value="Go Popular">Go Popular</option>
-<option value="Finger Heart">Finger Heart</option>
-<option value="Overreact">Overreact</option>
-<option value="Name shoutout">Name shoutout</option>
-<option value="Spinning Soccer">Spinning Soccer</option>
-<option value="Support Me">Support Me</option>
-<option value="Divine Fingers">Divine Fingers</option>
-<option value="Rosa">Rosa</option>
-<option value="Slow motion">Slow motion</option>
-<option value="Meowthumbs Up">Meowthumbs Up</option>
-<option value="Friendship Necklace">Friendship Necklace</option>
-<option value="Journey Pass">Journey Pass</option>
-<option value="Bravo!">Bravo!</option>
-<option value="Perfume">Perfume</option>
-<option value="Doughnut">Doughnut</option>
-<option value="Paper Crane">Paper Crane</option>
-<option value="Super GG">Super GG</option>
+<option value="">Loading gifts from Events...</option>
 </select>
 
 <button
-class="log-filter-btn"
+class="log-filter-btn simulate-gift-btn"
 onclick="simulateSelectedGift()">
 Simulate Gift
 </button>
@@ -8870,7 +9174,11 @@ async function simulateEvent(
     const spinTest =
         eventType === "comment"
         &&
-        data.comment === "!spin";
+        String(
+            data.comment || ""
+        ).toLowerCase().startsWith(
+            currentSpinCommand()
+        );
 
     const spinTriggered =
         Boolean(
@@ -8918,6 +9226,41 @@ async function simulateEvent(
 
 }
 
+function syncSimulatorGiftOptions() {
+    const select = document.getElementById("simulator_gift");
+    if (!select) return;
+
+    const previous = select.value;
+    const seen = new Set();
+    const gifts = (currentEvents || [])
+        .filter(event =>
+            String(event.trigger_type || "").toUpperCase() === "GIFT"
+            && Boolean(event.enabled)
+            && !event.plan_locked
+            && String(event.trigger_value || "").trim()
+        )
+        .map(event => String(event.trigger_value).trim())
+        .filter(gift => {
+            const key = gift.toLocaleLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        })
+        .sort((left, right) => left.localeCompare(right));
+
+    select.replaceChildren();
+    if (!gifts.length) {
+        const option = new Option("No enabled Gift event found", "");
+        select.add(option);
+        select.disabled = true;
+        return;
+    }
+
+    select.disabled = false;
+    for (const gift of gifts) select.add(new Option(gift, gift));
+    select.value = gifts.includes(previous) ? previous : gifts[0];
+}
+
 function simulateSelectedGift() {
 
     const giftName =
@@ -8925,121 +9268,20 @@ function simulateSelectedGift() {
             "simulator_gift"
         ).value;
 
+    if (!giftName) {
+        setTestFeedback(
+            "Failed",
+            "Create and enable a Gift event before using Simulate Gift."
+        );
+        return null;
+    }
+
     return simulateEvent(
         "gift",
         {
             gift_name: giftName,
             count: 1
         }
-    );
-
-}
-
-
-function giftQueueSettingKey(
-    giftName
-) {
-
-    return "gift_queue_delay_ms:" +
-        giftName;
-
-}
-
-
-async function setGiftQueueDelay(
-    giftName
-) {
-
-    const response =
-        await fetch(
-            "/api/settings/" +
-            encodeURIComponent(
-                giftQueueSettingKey(
-                    giftName
-                )
-            )
-        );
-
-
-    const data =
-        await response.json();
-
-
-    const value =
-        prompt(
-            "Queue delay for " +
-            giftName +
-            " in milliseconds",
-            data.value ||
-            "150"
-        );
-
-
-    if (value === null) {
-
-        return;
-
-    }
-
-
-    const delay =
-        Number(
-            value
-        );
-
-
-    if (
-        !Number.isInteger(
-            delay
-        )
-        ||
-        delay < 0
-    ) {
-
-        alert(
-            "Queue delay must be a whole number of milliseconds."
-        );
-
-        return;
-
-    }
-
-
-    await fetch(
-        "/api/settings",
-        {
-
-            method:
-            "PUT",
-
-            headers: {
-                "Content-Type":
-                "application/json"
-            },
-
-            body:
-            JSON.stringify({
-
-                key:
-                giftQueueSettingKey(
-                    giftName
-                ),
-
-                value:
-                String(
-                    delay
-                ),
-
-            })
-
-        }
-    );
-
-
-    alert(
-        "Queue delay saved for " +
-        giftName +
-        "."
     );
 
 }
@@ -9662,7 +9904,7 @@ function openEventModal() {
     document.getElementById(
         "event_command_value"
     ).value =
-        "!spin";
+        currentSpinCommand();
 
     document.getElementById(
         "event_like_value"
@@ -10216,7 +10458,7 @@ async function clearRecentActivity() {
 }
 let currentActions = [];
 let currentEvents = [];
-const overlayScreenCount = 8;
+const overlayScreenCount = 10;
 const defaultSectionRowLimit = 10;
 const LIBRARY_VIEW_STATE_KEY =
     "livetrigger_library_view_state";
@@ -10446,6 +10688,100 @@ function spinOverlayUrl(
 
 }
 
+const goalOverlaySettings = {
+    title: "goal_overlay_title",
+    target: "goal_overlay_target",
+    label: "goal_overlay_label",
+    start: "goal_overlay_start",
+    action_id: "goal_overlay_action_id",
+    sound_volume: "goal_overlay_sound_volume",
+};
+
+function goalOverlaySettingKey(
+    name
+) {
+
+    return `goal_overlay_${name}`;
+
+}
+
+function goalOverlayValue(
+    name
+) {
+
+    const input =
+        document.getElementById(
+            goalOverlaySettings[name]
+        );
+
+    return input
+        ? input.value
+        : "";
+
+}
+
+function goalOverlayUrl() {
+
+    const params =
+        new URLSearchParams();
+
+    params.set(
+        "target",
+        Math.max(
+            1,
+            Number(
+                goalOverlayValue(
+                    "target"
+                )
+            )
+            ||
+            6000
+        )
+    );
+
+    params.set(
+        "title",
+        goalOverlayValue(
+            "title"
+        )
+        ||
+        "Like Goal"
+    );
+
+    params.set(
+        "label",
+        goalOverlayValue(
+            "label"
+        )
+        ||
+        "Likes"
+    );
+
+    const start =
+        Math.max(
+            0,
+            Number(
+                goalOverlayValue(
+                    "start"
+                )
+            )
+            ||
+            0
+        );
+
+    if (start > 0) {
+
+        params.set(
+            "start",
+            start
+        );
+
+    }
+
+    return `${window.location.origin}/overlay/goal.html?${params.toString()}`;
+
+}
+
 function updateSpinOverlayUrlField() {
 
     const input =
@@ -10523,6 +10859,9 @@ const spinWheelSegmentsSettingKey =
 const spinWheelEnabledSettingKey =
     "spin_wheel_enabled";
 
+const spinWheelCommandSettingKey =
+    "spin_wheel_command";
+
 const spinWheelRequireFollowerSettingKey =
     "spin_wheel_require_follower";
 
@@ -10544,6 +10883,54 @@ const spinRarityLabels = {
     epic: "Epic"
 };
 
+function normalizeSpinCommand(
+    value
+) {
+
+    let command =
+        String(
+            value || "!spin"
+        ).trim().split(/\s+/)[0].toLowerCase();
+
+    if (!command) {
+
+        command = "!spin";
+
+    }
+
+    if (!command.startsWith("!")) {
+
+        command = "!" + command;
+
+    }
+
+    return command;
+
+}
+
+function currentSpinCommand() {
+
+    return normalizeSpinCommand(
+        document.getElementById(
+            "spin_wheel_command"
+        )?.value
+    );
+
+}
+
+function simulateSpinWheelCommand() {
+
+    simulateEvent(
+        "comment",
+        {
+            comment: currentSpinCommand(),
+            viewer_type: "follower",
+            is_follower: true,
+        }
+    );
+
+}
+
 function normalizeSpinRarity(rarity) {
 
     const value =
@@ -10557,6 +10944,22 @@ function normalizeSpinRarity(rarity) {
     )
         ? value
         : "common";
+
+}
+
+function updateGoalOverlayUrlField() {
+
+    const input =
+        document.getElementById(
+            "goal_overlay_url"
+        );
+
+    if (input) {
+
+        input.value =
+            goalOverlayUrl();
+
+    }
 
 }
 
@@ -10635,6 +11038,12 @@ async function loadSpinWheelSettings() {
         await getSettingValue(
             spinWheelEnabledSettingKey,
             "true"
+        );
+
+    const commandValue =
+        await getSettingValue(
+            spinWheelCommandSettingKey,
+            "!spin"
         );
 
     const requireFollowerValue =
@@ -10739,6 +11148,13 @@ async function loadSpinWheelSettings() {
         String(
             enabledValue
         ).toLowerCase() !== "false";
+
+    document.getElementById(
+        "spin_wheel_command"
+    ).value =
+        normalizeSpinCommand(
+            commandValue
+        );
 
     document.getElementById(
         "spin_wheel_require_follower"
@@ -11223,6 +11639,23 @@ async function saveSpinWheelSettings() {
             : "false"
     );
 
+    const spinCommand =
+        normalizeSpinCommand(
+            document.getElementById(
+                "spin_wheel_command"
+            ).value
+        );
+
+    document.getElementById(
+        "spin_wheel_command"
+    ).value =
+        spinCommand;
+
+    await saveSettingValue(
+        spinWheelCommandSettingKey,
+        spinCommand
+    );
+
     await saveSettingValue(
         spinWheelRequireFollowerSettingKey,
         document.getElementById(
@@ -11270,7 +11703,7 @@ async function saveSpinWheelSettings() {
 
     showToast(
         "Spin wheel saved",
-        "!spin will use the updated wheel list and linked actions."
+        `${spinCommand} will use the updated wheel list and linked actions.`
     );
 
 }
@@ -11285,6 +11718,11 @@ function resetSpinWheelDefaults() {
         "spin_wheel_enabled"
     ).checked =
         true;
+
+    document.getElementById(
+        "spin_wheel_command"
+    ).value =
+        "!spin";
 
     document.getElementById(
         "spin_wheel_require_follower"
@@ -11519,6 +11957,418 @@ function openSpinOverlay() {
             1
         ),
         "_blank"
+    );
+
+}
+
+async function loadGoalOverlaySettings() {
+
+    const defaults = {
+        title: "Like Goal",
+        target: "6000",
+        label: "Likes",
+        start: "0",
+        action_id: "",
+        sound_volume: "40",
+    };
+
+    for (
+        const [name, inputId]
+        of Object.entries(
+            goalOverlaySettings
+        )
+    ) {
+
+        const input =
+            document.getElementById(
+                inputId
+            );
+
+        if (!input) {
+
+            continue;
+
+        }
+
+        input.value =
+            await getSettingValue(
+                goalOverlaySettingKey(
+                    name
+                ),
+                defaults[name]
+            );
+
+        if (
+            name === "action_id"
+            && input.dataset
+        ) {
+
+            input.dataset.selectedActionId =
+                input.value;
+
+        }
+
+        if (name === "sound_volume") {
+            document.getElementById("goal_overlay_sound_volume_output").textContent =
+                `${input.value}%`;
+        }
+
+    }
+
+    refreshGoalActionOptions();
+    updateGoalOverlayActionHint();
+    updateGoalOverlayUrlField();
+    refreshGoalOverlayStatus();
+
+}
+
+function refreshGoalActionOptions() {
+
+    const select =
+        document.getElementById(
+            "goal_overlay_action_id"
+        );
+
+    if (!select) {
+
+        return;
+
+    }
+
+    const selected =
+        String(
+            select.dataset.selectedActionId ||
+            select.value ||
+            ""
+        );
+
+    select.innerHTML =
+        `
+        <option value="">
+        Select Action
+        </option>
+        ${currentActions.map(
+            action => `
+            <option
+                value="${escapeHtml(action.id)}"
+                ${action.plan_locked ? "disabled" : ""}
+                ${String(action.id) === selected ? "selected" : ""}
+            >
+            ${escapeHtml(action.name)}${action.plan_locked ? " (Locked - Pro)" : ""}
+            </option>
+            `
+        ).join("")}
+        `;
+
+    select.value =
+        selected;
+
+    select.dataset.selectedActionId =
+        select.value;
+
+}
+
+function updateGoalOverlayActionHint() {
+
+    const select =
+        document.getElementById(
+            "goal_overlay_action_id"
+        );
+
+    const hint =
+        document.getElementById(
+            "goal_overlay_action_hint"
+        );
+
+    if (!select || !hint) {
+
+        return;
+
+    }
+
+    const action =
+        currentActions.find(
+            item => String(item.id) === String(select.value)
+        );
+
+    hint.textContent =
+        action
+            ? `Goal reached will run: ${action.name}`
+            : "No action selected. The overlay will count likes only.";
+
+}
+
+async function saveGoalOverlaySettings() {
+
+    for (
+        const name
+        of Object.keys(
+            goalOverlaySettings
+        )
+    ) {
+
+        await saveSettingValue(
+            goalOverlaySettingKey(
+                name
+            ),
+            goalOverlayValue(
+                name
+            )
+        );
+
+    }
+
+    await saveSettingValue(
+        "goal_overlay_current_target",
+        Math.max(
+            1,
+            Number(
+                goalOverlayValue(
+                    "target"
+                )
+            )
+            ||
+            6000
+        )
+    );
+
+    updateGoalOverlayActionHint();
+    updateGoalOverlayUrlField();
+    await refreshGoalOverlayStatus();
+
+    const selectedAction =
+        currentActions.find(
+            action =>
+                String(action.id) ===
+                String(goalOverlayValue("action_id"))
+        );
+
+    showToast(
+        "Goal overlay saved",
+        selectedAction
+            ? `Goal reached will run: ${selectedAction.name}`
+            : "No action selected for goal reached."
+    );
+
+}
+
+function renderGoalOverlayStatus(
+    status
+) {
+
+    const element =
+        document.getElementById(
+            "goal_overlay_status"
+        );
+
+    if (!element) {
+
+        return;
+    }
+
+    const visibleTotal =
+        Number(
+            status.visible_total
+        )
+        ||
+        0;
+    const target =
+        Number(
+            status.target
+        )
+        ||
+        Number(
+            status.step
+        )
+        ||
+        0;
+    const step =
+        Number(
+            status.step
+        )
+        ||
+        target;
+
+    element.textContent =
+        `Goal progress: ${visibleTotal.toLocaleString("en-US")} / ` +
+        `${target.toLocaleString("en-US")} likes. ` +
+        `Next goal adds ${step.toLocaleString("en-US")}.`;
+
+}
+
+async function refreshGoalOverlayStatus() {
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/goal/status"
+            );
+        const status =
+            await response.json();
+
+        renderGoalOverlayStatus(
+            status
+        );
+
+        return status;
+
+    } catch (error) {
+
+        renderGoalOverlayStatus({
+            visible_total: 0,
+            target: goalOverlayValue("target"),
+            step: goalOverlayValue("target"),
+        });
+
+        return null;
+    }
+
+}
+
+async function addGoalLikes(
+    count,
+    user = "Dashboard"
+) {
+
+    const response =
+        await fetch(
+            "/api/goal/add",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type":
+                    "application/json"
+                },
+                body: JSON.stringify({
+                    count,
+                    user,
+                })
+            }
+        );
+
+    const status =
+        await response.json();
+
+    renderGoalOverlayStatus(
+        status
+    );
+
+    return status;
+
+}
+
+async function addGoalLikesFromDashboard() {
+
+    const input =
+        document.getElementById(
+            "goal_overlay_add_count"
+        );
+    const count =
+        Math.max(
+            1,
+            Number(
+                input?.value
+            )
+            ||
+            1
+        );
+
+    await addGoalLikes(
+        count,
+        "Dashboard"
+    );
+
+    showToast(
+        "Goal updated",
+        `Added ${count.toLocaleString("en-US")} likes.`
+    );
+
+}
+
+async function resetGoalFromDashboard() {
+
+    const response =
+        await fetch(
+            "/api/goal/reset",
+            {
+                method: "POST"
+            }
+        );
+    const status =
+        await response.json();
+
+    renderGoalOverlayStatus(
+        status
+    );
+
+    showToast(
+        "Goal reset",
+        "Progress returned to 0 and the next target restarted."
+    );
+
+}
+
+async function advanceGoalFromDashboard() {
+
+    const response =
+        await fetch(
+            "/api/goal/next",
+            {
+                method: "POST"
+            }
+        );
+    const status =
+        await response.json();
+
+    renderGoalOverlayStatus(
+        status
+    );
+
+    showToast(
+        "Next goal set",
+        `New target: ${Number(status.target || 0).toLocaleString("en-US")} likes.`
+    );
+
+}
+
+async function copyGoalOverlayUrl() {
+
+    const url =
+        goalOverlayUrl();
+
+    await navigator.clipboard.writeText(
+        url
+    );
+
+    showToast(
+        "Goal URL copied",
+        "Paste it into TikTok Live Studio Browser Source."
+    );
+
+}
+
+function openGoalOverlay() {
+
+    window.open(
+        goalOverlayUrl(),
+        "_blank"
+    );
+
+}
+
+async function testGoalLike() {
+
+    updateGoalOverlayUrlField();
+
+    await addGoalLikes(
+        100,
+        "Dashboard Test"
+    );
+
+    showToast(
+        "Goal test sent",
+        "Connected goal overlays should increase by 100 likes."
     );
 
 }
@@ -12675,6 +13525,7 @@ function actionMatchesQuery(
         action.name,
         action.description,
         String(action.duration),
+        action.execution_type,
         ...steps.map(
             step => `${step.type} ${step.value}`
         ),
@@ -12683,6 +13534,98 @@ function actionMatchesQuery(
         .toLowerCase();
 
     return haystack.includes(query);
+
+}
+
+function formatActionExecutionType(
+    executionType
+) {
+
+    const value =
+        String(
+            executionType || "auto"
+        ).toLowerCase();
+
+    const labels = {
+        auto: "Auto",
+        instant: "Instant",
+        staggered: "Overlap",
+        queued: "Queue",
+    };
+
+    return labels[value] || "Auto";
+
+}
+
+function smartActionExecutionType(action, steps = []) {
+    const stepTypes = new Set(
+        steps.map(step => String(step.type || "").trim().toLowerCase())
+    );
+    const duration = Number(action?.duration) || 0;
+    const hasShortSound = stepTypes.has("sound") && duration > 0 && duration <= 2;
+    const immediateTypes = ["keyboard", "webhook"];
+    if (hasShortSound) immediateTypes.push("sound");
+    const immediate = stepTypes.size > 0
+        && [...stepTypes].every(type => immediateTypes.includes(type));
+
+    if (!immediate) return "Queue";
+
+    return "Instant";
+}
+
+function autoExecutionDescription(action, steps = []) {
+    const result = smartActionExecutionType(action, steps);
+    if (result === "Instant") {
+        const hasSound = steps.some(step => String(step.type || "").toLowerCase() === "sound");
+        return hasSound
+            ? "Auto chose Instant — sound Action duration is 2 seconds or less."
+            : "Auto chose Instant — contains only keyboard/webhook steps.";
+    }
+    return "Auto chose Queue — sound is over 2 seconds/unknown, or Action contains TTS/overlay.";
+}
+
+function syncStaggerDelayField() {
+    const mode = document.getElementById("action_execution_type")?.value;
+    const field = document.getElementById("action_stagger_delay_field");
+    if (field) field.style.display = mode === "staggered" ? "grid" : "none";
+}
+
+function actionExecutionTypeOptions(
+    selectedValue
+) {
+
+    const selected =
+        String(
+            selectedValue || "auto"
+        ).toLowerCase();
+
+    return [
+        [
+            "auto",
+            "Auto",
+        ],
+        [
+            "instant",
+            "Instant",
+        ],
+        [
+            "staggered",
+            "Overlap",
+        ],
+        [
+            "queued",
+            "Queue",
+        ],
+    ].map(
+        ([value, label]) => `
+            <option
+                value="${value}"
+                ${value === selected ? "selected" : ""}
+            >
+                ${label}
+            </option>
+        `
+    ).join("");
 
 }
 
@@ -13007,6 +13950,8 @@ async function loadEvents() {
     currentAuth.usage.triggers =
         data.events.length;
 
+    syncSimulatorGiftOptions();
+
 
     let html = "";
 
@@ -13090,14 +14035,6 @@ async function loadEvents() {
         onclick="editEvent(${event.id})">
         Edit
         </button>
-
-        ${event.trigger_type === "GIFT" ? `
-        <button
-        class="test-btn"
-        onclick='setGiftQueueDelay(${JSON.stringify(event.trigger_value)})'>
-        Queue Delay
-        </button>
-        ` : ""}
 
         <button
         class="delete-btn"
@@ -13827,6 +14764,14 @@ async function editActionPreset(id) {
     ).value =
         action.duration;
 
+	document.getElementById(
+		"action_execution_type"
+	).value =
+		action.execution_type || "auto";
+	document.getElementById("action_stagger_delay_ms").value =
+		action.stagger_delay_ms ?? 100;
+	syncStaggerDelayField();
+
 
     document.getElementById(
         "new_action_description"
@@ -14020,6 +14965,131 @@ async function toggleActionStatus(
     );
 
     await loadActionLibrary();
+
+}
+
+async function updateActionExecutionType(
+    id,
+    executionType,
+    selectElement
+) {
+
+    const previousValue =
+        selectElement?.dataset.previousValue
+        ||
+        "auto";
+
+    if (selectElement) {
+
+        selectElement.disabled = true;
+
+    }
+
+    try {
+
+        const response =
+            await fetch(
+                "/api/actions"
+            );
+
+        const data =
+            await response.json();
+
+        const action =
+            data.actions.find(
+                item => item.id === id
+            );
+
+        if (!action) {
+
+            throw new Error(
+                "Action not found."
+            );
+
+        }
+
+        const updateResponse =
+            await fetch(
+                `/api/actions/${id}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body: JSON.stringify({
+                        name:
+                            action.name,
+                        duration:
+                            Number(action.duration) || 0,
+                        description:
+                            action.description || "",
+                        media_volume:
+                            Number(action.media_volume) || 100,
+                        overlay_screen:
+                            Number(action.overlay_screen) || 1,
+                        global_cooldown:
+                            Number(action.global_cooldown) || 0,
+                        user_cooldown:
+                            Number(action.user_cooldown) || 0,
+                        fade_enabled:
+                            Boolean(action.fade_enabled),
+                        repeat_gift_combos:
+                            Boolean(action.repeat_gift_combos),
+                        skip_on_next_action:
+                            Boolean(action.skip_on_next_action),
+                        execution_type:
+                            executionType,
+                        stagger_delay_ms:
+                            Number(action.stagger_delay_ms) || 100,
+                    }),
+                }
+            );
+
+        if (!updateResponse.ok) {
+
+            throw new Error(
+                "Failed to update Action."
+            );
+
+        }
+
+        showToast(
+            "Action updated",
+            "Gift execution set to " +
+                formatActionExecutionType(
+                    executionType
+                )
+        );
+
+        await loadActionLibrary();
+        await loadEvents();
+
+    } catch (error) {
+
+        if (selectElement) {
+
+            selectElement.value =
+                previousValue;
+
+        }
+
+        alert(
+            error.message ||
+            "Failed to update Action."
+        );
+
+    } finally {
+
+        if (selectElement) {
+
+            selectElement.disabled = false;
+            selectElement.dataset.previousValue =
+                selectElement.value;
+
+        }
+
+    }
 
 }
 
@@ -15000,6 +16070,8 @@ async function loadActionLibrary() {
         );
 
     refreshSpinActionOptions();
+    refreshGoalActionOptions();
+    updateGoalOverlayActionHint();
 
     const selectableActions =
         currentActions.filter(
@@ -15267,6 +16339,27 @@ async function loadActionLibrary() {
                 ID ${action.id}
                 </div>
             </td>
+            <td>
+                <div class="execution-choice-wrap">
+                <select
+                    class="inline-execution-select"
+                    data-previous-value="${escapeHtml(action.execution_type || "auto")}"
+                    ${lockedAttributes}
+                    onchange="updateActionExecutionType(${action.id}, this.value, this)"
+                    title="Gift execution"
+                >
+                    ${actionExecutionTypeOptions(
+                        action.execution_type
+                    )}
+                </select>
+                ${String(action.execution_type || "auto").toLowerCase() === "auto"
+                    ? `<span class="auto-execution-description">${escapeHtml(autoExecutionDescription(action, steps))}</span>`
+                    : ""}
+                ${String(action.execution_type || "").toLowerCase() === "staggered"
+                    ? `<span class="auto-execution-description">${escapeHtml(action.stagger_delay_ms || 100)} ms between combo starts; overlap allowed.</span>`
+                    : ""}
+                </div>
+            </td>
             <td class="mono-cell">
             ${escapeHtml(action.duration)} sec
             </td>
@@ -15289,14 +16382,14 @@ async function loadActionLibrary() {
     html += tableSectionToggleRow(
         "actions",
         matchedActionCount,
-        6
+        7
     );
 
     if (!html) {
 
         html = `
         <tr>
-            <td colspan="6" class="empty-state">
+            <td colspan="7" class="empty-state">
             No actions match the current filter.
             </td>
         </tr>
@@ -15352,6 +16445,8 @@ async function loadEvents() {
 
     currentAuth.usage.triggers =
         data.events.length;
+
+    syncSimulatorGiftOptions();
 
     const query =
         document.getElementById(
@@ -15562,14 +16657,6 @@ async function loadEvents() {
                     onclick="duplicateEvent(${event.id})">
                     Clone
                     </button>
-                    ${event.trigger_type === "GIFT" ? `
-                    <button
-                    class="test-btn"
-                    ${lockedAttributes}
-                    onclick='setGiftQueueDelay(${JSON.stringify(event.trigger_value)})'>
-                    Queue Delay
-                    </button>
-                    ` : ""}
                     <button
                     class="delete-btn"
                     onclick="deleteEvent(${event.id})">
@@ -15605,6 +16692,127 @@ async function loadEvents() {
     ).innerHTML = html;
 
 }
+const chatTTSFields = [
+    "voice", "comment_mode", "prefix", "command", "template",
+    "max_length", "max_queue", "rate", "volume", "pitch",
+    "allowed_users", "blocked_users", "blocked_words"
+];
+
+function syncChatTTSMode() {
+    const mode = document.getElementById("chat_tts_comment_mode").value;
+    document.getElementById("chat_tts_prefix_field").style.display = mode === "prefix" ? "flex" : "none";
+    document.getElementById("chat_tts_command_field").style.display = mode === "command" ? "flex" : "none";
+}
+
+function updateChatTTSOutputs() {
+    document.getElementById("chat_tts_rate_output").textContent = `${document.getElementById("chat_tts_rate").value}%`;
+    document.getElementById("chat_tts_volume_output").textContent = `${document.getElementById("chat_tts_volume").value}%`;
+    document.getElementById("chat_tts_pitch_output").textContent = `${document.getElementById("chat_tts_pitch").value}Hz`;
+}
+
+function renderChatTTSStatus(queue = {}) {
+    const current = queue.current
+        ? `Speaking: ${queue.current.nickname} — ${queue.current.comment}`
+        : "Voice idle";
+    document.getElementById("chat_tts_status").textContent =
+        `${current} | Pending: ${queue.pending || 0} | Dropped: ${queue.dropped || 0} | Skipped: ${queue.skipped || 0}`;
+}
+
+async function loadChatTTS() {
+    try {
+        const response = await fetch("/api/chat-tts");
+        if (!response.ok) throw new Error("Could not load TTS Chat");
+        const data = await response.json();
+        const config = data.config || {};
+        document.getElementById("chat_tts_enabled").checked = Boolean(config.enabled);
+        for (const key of chatTTSFields) {
+            const field = document.getElementById(`chat_tts_${key}`);
+            if (field && config[key] !== undefined) field.value = config[key];
+        }
+        for (const key of ["allow_non_followers", "allow_followers", "allow_fan_club", "allow_subscribers"]) {
+            document.getElementById(`chat_tts_${key}`).checked = Boolean(config[key]);
+        }
+        syncChatTTSMode();
+        updateChatTTSOutputs();
+        renderChatTTSStatus(data.queue);
+        loadChatTTSVoices(config.voice);
+    } catch (error) {
+        document.getElementById("chat_tts_status").textContent = error.message;
+    }
+}
+
+async function loadChatTTSVoices(selectedVoice) {
+    try {
+        const response = await fetch("/api/actions/tts/voices");
+        if (!response.ok) return;
+        const data = await response.json();
+        const select = document.getElementById("chat_tts_voice");
+        const voices = data.voices || [];
+        if (!voices.length) return;
+        select.innerHTML = voices.map(voice =>
+            `<option value="${escapeHtml(voice.name)}">${escapeHtml(voice.display_name || voice.name)} (${escapeHtml(voice.locale || "")})</option>`
+        ).join("");
+        select.value = selectedVoice;
+        if (!select.value) select.insertAdjacentHTML("afterbegin", `<option value="${escapeHtml(selectedVoice)}">${escapeHtml(selectedVoice)}</option>`);
+        select.value = selectedVoice;
+    } catch (error) {
+        // Keep the bundled Malay voice choices when the online list is unavailable.
+    }
+}
+
+function collectChatTTSConfig() {
+    const config = { enabled: document.getElementById("chat_tts_enabled").checked };
+    for (const key of chatTTSFields) {
+        const field = document.getElementById(`chat_tts_${key}`);
+        config[key] = field.type === "number" || field.type === "range" ? Number(field.value) : field.value;
+    }
+    for (const key of ["allow_non_followers", "allow_followers", "allow_fan_club", "allow_subscribers"]) {
+        config[key] = document.getElementById(`chat_tts_${key}`).checked;
+    }
+    return config;
+}
+
+async function saveChatTTS() {
+    const response = await fetch("/api/chat-tts", {
+        method: "PUT", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({config: collectChatTTSConfig()})
+    });
+    const data = await response.json();
+    if (!response.ok) return showToast(data.message || "Could not save TTS Chat", "error");
+    renderChatTTSStatus(data.queue);
+    showToast("TTS Chat settings saved.", "success");
+}
+
+async function testChatTTS() {
+    await saveChatTTS();
+    const response = await fetch("/api/chat-tts/test", {method: "POST"});
+    const data = await response.json();
+    renderChatTTSStatus(data.queue);
+    showToast(data.accepted ? "Test message added to TTS queue." : "Test was filtered or TTS Chat is disabled.", data.accepted ? "success" : "error");
+}
+
+async function skipChatTTS() {
+    const response = await fetch("/api/chat-tts/skip", {method: "POST"});
+    const data = await response.json();
+    renderChatTTSStatus(data.queue);
+}
+
+async function clearChatTTSQueue() {
+    const response = await fetch("/api/chat-tts/queue", {method: "DELETE"});
+    const data = await response.json();
+    renderChatTTSStatus(data.queue);
+    showToast(`Cleared ${data.cleared || 0} pending TTS messages.`, "success");
+}
+
+async function refreshChatTTSStatus() {
+    try {
+        const response = await fetch("/api/chat-tts/status");
+        if (response.ok) renderChatTTSStatus((await response.json()).queue);
+    } catch (error) {
+        // Connection status elsewhere in the dashboard reports offline state.
+    }
+}
+
 async function initializeEntitledDashboard() {
 
     await loadAuthState();
@@ -15625,6 +16833,8 @@ loadTikTokStatus();
 loadTikTokLogs();
 
 loadOverlayScreens();
+loadGoalOverlaySettings();
+loadChatTTS();
 
 loadTestDelaySetting();
 loadTestCountdownBeepSetting();
@@ -15636,6 +16846,8 @@ setInterval(
     updateOverlayStatuses,
     3000
 );
+
+setInterval(refreshChatTTSStatus, 3000);
 
 setInterval(
     loadTikTokStatus,
@@ -15774,6 +16986,12 @@ async function openActionModal() {
 	document.getElementById(
 		"new_action_duration"
 	).value = "";
+
+	document.getElementById(
+		"action_execution_type"
+	).value = "auto";
+	document.getElementById("action_stagger_delay_ms").value = "100";
+	syncStaggerDelayField();
 
 
 	document.getElementById(
@@ -15926,6 +17144,38 @@ async function loadSoundLibrary() {
 
     renderSoundLibrary();
 
+}
+
+function chooseLocalSound() {
+    const input = document.getElementById("local-sound-file-input");
+    input.value = "";
+    input.click();
+}
+
+async function uploadLocalSound(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+
+    const list = document.getElementById("sound-library-list");
+    list.innerHTML = `<div class="empty-state">Importing ${escapeHtml(file.name)}...</div>`;
+    const form = new FormData();
+    form.append("file", file);
+
+    try {
+        const response = await fetch("/api/actions/sounds/upload", {
+            method: "POST",
+            body: form,
+        });
+        const data = await response.json();
+        if (!response.ok || !data.ok) {
+            throw new Error(data.detail || data.message || "Could not import local audio.");
+        }
+        applySoundFromLibrary(data.name);
+        showToast(`${data.name} imported into the Sound Library.`, "success");
+    } catch (error) {
+        list.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+        showToast(error.message, "error");
+    }
 }
 
 async function searchMyinstantsSounds() {
@@ -16618,6 +17868,16 @@ async function saveAction() {
 					name,
 					duration,
 					description,
+					execution_type:
+						document.getElementById(
+							"action_execution_type"
+						).value,
+					stagger_delay_ms: Math.max(
+						0,
+						Math.min(10000, Number(
+							document.getElementById("action_stagger_delay_ms").value
+						) || 100)
+					),
 					media_volume: Number(
 						document.getElementById(
 							"action_media_volume"
@@ -16924,9 +18184,19 @@ async function testAction(id) {
                 </button>
                 <button
                     class="status-btn"
-                    onclick="loadSoundLibrary()"
+                    onclick="chooseLocalSound()"
                 >
                 Local
+                </button>
+                <input
+                    id="local-sound-file-input"
+                    type="file"
+                    accept=".mp3,.wav,.ogg,audio/mpeg,audio/wav,audio/ogg"
+                    onchange="uploadLocalSound(this)"
+                    hidden
+                >
+                <button class="edit-btn" onclick="loadSoundLibrary()">
+                Refresh Library
                 </button>
                 <span class="row-subtitle">
                 Sounds provided by Myinstants.com or local /sounds
@@ -17095,6 +18365,35 @@ async function testAction(id) {
             type="number"
             value="5"
         >
+
+        <label>
+            Gift execution
+        </label>
+
+        <select id="action_execution_type" onchange="syncStaggerDelayField()">
+            <option value="auto">
+                Auto (Recommended)
+            </option>
+            <option value="instant">
+                Instant
+            </option>
+            <option value="staggered">
+                Overlap
+            </option>
+            <option value="queued">
+                Queue
+            </option>
+        </select>
+
+        <div id="action_stagger_delay_field" class="event-detail-row" style="display:none;">
+            <div>Retrigger Delay (milliseconds)</div>
+            <input id="action_stagger_delay_ms" type="number" min="0" max="10000" step="10" value="100">
+            <div class="row-subtitle">Default 100 ms. The next combo starts after this delay without waiting for the previous Action to finish.</div>
+        </div>
+
+        <div class="row-subtitle">
+            Auto chooses Instant for Keyboard/Webhook or Sound Actions up to 2 seconds, and Queue for longer Sound, TTS, or Overlay Actions. Choose Overlap manually when combo starts need an adjustable millisecond gap.
+        </div>
 
 
         <label>
@@ -17359,6 +18658,8 @@ async function testAction(id) {
 				<option value="6">Screen 6</option>
 				<option value="7">Screen 7</option>
 				<option value="8">Screen 8</option>
+				<option value="9">Screen 9</option>
+				<option value="10">Screen 10</option>
 			</select>
 		</div>
 

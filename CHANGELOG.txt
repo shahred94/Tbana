@@ -1,5 +1,14 @@
 # TBana Stream Change Record
 
+## 1.1.1 - TTS Chat, smarter Actions and live interaction upgrades
+
+- Automatic TikTok chat TTS with filters, commands, voices and queue controls.
+- Local MP3/WAV/OGG Sound Library imports.
+- Auto, Instant, Overlap and Queue gift execution modes.
+- Subscriber custom-emote Sound Action triggers.
+- Like Goal Action and volume improvements.
+- Ten overlay screens and improved Event Simulator gifts.
+
 ## Unreleased - Pro price alignment
 
 - Aligned the dashboard and ToyyibPay Pro subscription price to RM29.90.

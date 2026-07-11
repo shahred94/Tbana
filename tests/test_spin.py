@@ -315,6 +315,67 @@ class SpinWidgetTest(unittest.TestCase):
             "https://example.com/avatar.png",
         )
 
+    def test_custom_spin_command_requires_bang_and_allows_prefix(self):
+        def run(comment):
+            event = self.event(
+                comment=comment,
+                is_follower=True,
+            )
+
+            with (
+                patch.object(
+                    spin,
+                    "spin_enabled",
+                    return_value=True,
+                ),
+                patch.object(
+                    spin,
+                    "get_setting",
+                    return_value="chaos",
+                ),
+                patch.object(
+                    spin,
+                    "spin_access_details",
+                    return_value={
+                        "allowed": True,
+                        "reason": "",
+                        "reply": "",
+                        "viewer_type": "follower",
+                        "viewer_status": "Follower",
+                        "remaining_seconds": 0,
+                    },
+                ),
+                patch.object(
+                    spin,
+                    "load_spin_entries",
+                    return_value=[
+                        {
+                            "label": "Kickflip",
+                            "action_id": 17,
+                        }
+                    ],
+                ),
+                patch.object(
+                    spin,
+                    "enqueue_spin_job",
+                    return_value=1,
+                ) as enqueue,
+            ):
+                result = spin.trigger_spin_command(event)
+
+            return result, enqueue
+
+        no_bang, no_bang_enqueue = run("chaos")
+        exact, exact_enqueue = run("!chaos")
+        prefix, prefix_enqueue = run("!chaosablnetgd")
+
+        self.assertIsNone(no_bang)
+        no_bang_enqueue.assert_not_called()
+        self.assertTrue(exact["triggered"])
+        exact_enqueue.assert_called_once()
+        self.assertTrue(prefix["triggered"])
+        prefix_enqueue.assert_called_once()
+
     def test_blocked_spin_sends_auto_reply_notice(self):
         access = {
             "allowed": False,

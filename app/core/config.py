@@ -42,7 +42,7 @@ class Settings:
 
     database_path = "livetrigger.db"
     app_env = os.getenv("APP_ENV", "development").strip().lower()
-    app_version = os.getenv("APP_VERSION", "1.0.9").strip()
+    app_version = os.getenv("APP_VERSION", "1.1.1").strip()
     update_repository = os.getenv(
         "UPDATE_REPOSITORY",
         "shahred94/Tbana",

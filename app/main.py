@@ -71,11 +71,17 @@ from app.api.websocket import (
 from app.api.gift_catalog import (
     router as gift_catalog_router,
 )
+from app.api.goal import (
+    router as goal_router,
+)
 from app.api.update import (
     router as update_router,
 )
 from app.api.feedback import (
     router as feedback_router,
+)
+from app.api.chat_tts import (
+    router as chat_tts_router,
 )
 
 from app.tiktok.connector import (
@@ -181,10 +187,16 @@ app.include_router(
     gift_catalog_router
 )
 app.include_router(
+    goal_router
+)
+app.include_router(
     update_router
 )
 app.include_router(
     feedback_router
+)
+app.include_router(
+    chat_tts_router
 )
 
 
@@ -276,7 +288,7 @@ async def shutdown_event():
 def home():
 
     return RedirectResponse(
-        url="/dashboard/events.html?v=1.0.9"
+        url="/dashboard/events.html?v=1.1.1"
     )
 
 

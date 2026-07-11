@@ -116,7 +116,7 @@ def main() -> None:
 
     root = tk.Tk()
     root.title("TBana Stream")
-    root.geometry("430x290")
+    root.geometry("440x330")
     root.resizable(False, False)
 
     icon_path = resource_root / "assets" / "tibanakstream.ico"
@@ -126,14 +126,15 @@ def main() -> None:
         except tk.TclError:
             pass
 
-    background = "#111827"
-    panel = "#1f2937"
+    background = "#0f172a"
+    panel = "#172033"
     foreground = "#f9fafb"
-    muted = "#9ca3af"
-    accent = "#7c3aed"
+    muted = "#cbd5e1"
+    subtle = "#94a3b8"
+    accent = "#2563eb"
 
     root.configure(bg=background)
-    container = tk.Frame(root, bg=panel, padx=24, pady=22)
+    container = tk.Frame(root, bg=panel, padx=28, pady=22)
     container.pack(fill="both", expand=True, padx=14, pady=14)
 
     logo_path = (
@@ -144,7 +145,7 @@ def main() -> None:
     if logo_path.exists():
         logo_image = tk.PhotoImage(
             file=str(logo_path)
-        ).subsample(7, 7)
+        ).subsample(10, 10)
         logo_label = tk.Label(
             container,
             image=logo_image,
@@ -152,7 +153,7 @@ def main() -> None:
             borderwidth=0,
         )
         logo_label.image = logo_image
-        logo_label.pack(anchor="w")
+        logo_label.pack(anchor="center")
     else:
         tk.Label(
             container,
@@ -160,16 +161,16 @@ def main() -> None:
             bg=panel,
             fg=foreground,
             font=("Segoe UI", 18, "bold"),
-        ).pack(anchor="w")
+        ).pack(anchor="center")
 
-    status_text = tk.StringVar(value="Starting local dashboard…")
+    status_text = tk.StringVar(value="Preparing dashboard...")
     tk.Label(
         container,
         textvariable=status_text,
         bg=panel,
         fg=muted,
         font=("Segoe UI", 10),
-    ).pack(anchor="w", pady=(8, 18))
+    ).pack(anchor="center", pady=(10, 14))
 
     button_row = tk.Frame(container, bg=panel)
     button_row.pack(fill="x")
@@ -184,14 +185,16 @@ def main() -> None:
         state="disabled",
         bg=accent,
         fg="#ffffff",
-        activebackground="#6d28d9",
+        activebackground="#1d4ed8",
         activeforeground="#ffffff",
+        disabledforeground="#dbeafe",
         relief="flat",
-        padx=16,
+        cursor="hand2",
+        padx=18,
         pady=8,
         font=("Segoe UI", 10, "bold"),
     )
-    open_button.pack(side="left")
+    open_button.pack(side="left", fill="x", expand=True)
 
     server_holder: dict[str, object] = {}
 
@@ -203,25 +206,28 @@ def main() -> None:
 
     tk.Button(
         button_row,
-        text="Exit",
+        text="Close App",
         command=stop_application,
         bg="#374151",
         fg=foreground,
         activebackground="#4b5563",
         activeforeground=foreground,
         relief="flat",
-        padx=16,
+        cursor="hand2",
+        padx=18,
         pady=8,
         font=("Segoe UI", 10),
-    ).pack(side="left", padx=(10, 0))
+    ).pack(side="left", fill="x", expand=True, padx=(10, 0))
 
     tk.Label(
         container,
-        text="Keep this window open while using TBana Stream.",
+        text="The dashboard opens automatically. Close this window to stop the app.",
         bg=panel,
-        fg=muted,
+        fg=subtle,
         font=("Segoe UI", 9),
-    ).pack(anchor="w", pady=(20, 0))
+        wraplength=360,
+        justify="center",
+    ).pack(anchor="center", pady=(18, 0))
 
     def run_server() -> None:
         try:
@@ -257,7 +263,7 @@ def main() -> None:
     def wait_for_server() -> None:
         for _ in range(80):
             if live_trigger_is_ready():
-                root.after(0, lambda: status_text.set("● Connected — Ready"))
+                root.after(0, lambda: status_text.set("Dashboard is ready"))
                 root.after(0, lambda: open_button.config(state="normal"))
                 root.after(0, open_dashboard)
                 return
@@ -265,7 +271,7 @@ def main() -> None:
         root.after(
             0,
             lambda: status_text.set(
-                "Unable to start the dashboard. Close and try again."
+                "Dashboard failed to open. Close the app and try again."
             ),
         )
 

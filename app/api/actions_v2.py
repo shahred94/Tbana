@@ -7,7 +7,7 @@ import urllib.request
 from pathlib import Path
 
 import edge_tts
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
 from app.auth.service import (
@@ -33,12 +33,15 @@ from app.storage.sqlite_store import (
     update_action_preset,
     update_action_preset_status,
     delete_event_trigger,
+    get_setting,
+    set_setting,
 )
 
 from app.actions.executor import (
     action_executor,
 )
 from app.api.test_timing import normalize_test_delay
+from app.core.paths import data_path
 
 router = APIRouter(
     prefix="/api/actions",
@@ -110,6 +113,10 @@ class ActionCreate(BaseModel):
     repeat_gift_combos: bool = False
 
     skip_on_next_action: bool = False
+
+    execution_type: str = "auto"
+
+    stagger_delay_ms: int = 100
 
 
 class ActionStepCreate(BaseModel):
@@ -312,19 +319,21 @@ def change_event_trigger_status(
 
 @router.get("")
 def list_actions():
-
-    return {
-        "actions":
-        get_action_presets()
-    }
+    actions = get_action_presets()
+    for action in actions:
+        try:
+            action["stagger_delay_ms"] = max(0, min(10000, int(
+                get_setting(f"action_stagger_delay_ms:{action['id']}") or 100
+            )))
+        except (TypeError, ValueError):
+            action["stagger_delay_ms"] = 100
+    return {"actions": actions}
 
 
 @router.get("/sounds")
 def list_sounds():
 
-    sounds_path = Path(
-        "sounds"
-    )
+    sounds_path = data_path("sounds")
 
     allowed_extensions = {
         ".mp3",
@@ -350,11 +359,63 @@ def list_sounds():
 
                 sounds.append({
                     "name": file_path.name,
-                    "url": f"/sounds/{file_path.name}",
+                    "url": f"/sounds/{urllib.parse.quote(file_path.name)}",
                 })
 
     return {
         "sounds": sounds
+    }
+
+
+@router.post("/sounds/upload")
+async def upload_local_sound(
+    file: UploadFile = File(...),
+):
+    """Copy a user-selected audio file into the writable sound library."""
+
+    original_name = Path(file.filename or "").name
+    extension = Path(original_name).suffix.lower()
+    if extension not in {".mp3", ".wav", ".ogg"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Only MP3, WAV, and OGG files are supported.",
+        )
+
+    safe_stem = re.sub(r"[^A-Za-z0-9 _.-]+", "_", Path(original_name).stem).strip(" ._")
+    safe_stem = safe_stem or "sound"
+    sounds_path = data_path("sounds")
+    sounds_path.mkdir(parents=True, exist_ok=True)
+    target = sounds_path / f"{safe_stem}{extension}"
+    counter = 1
+    while target.exists():
+        target = sounds_path / f"{safe_stem}_{counter}{extension}"
+        counter += 1
+
+    total = 0
+    try:
+        with target.open("wb") as output:
+            while chunk := await file.read(1024 * 1024):
+                total += len(chunk)
+                if total > 25 * 1024 * 1024:
+                    raise HTTPException(
+                        status_code=413,
+                        detail="Audio file must be 25 MB or smaller.",
+                    )
+                output.write(chunk)
+    except Exception:
+        target.unlink(missing_ok=True)
+        raise
+    finally:
+        await file.close()
+
+    if total == 0:
+        target.unlink(missing_ok=True)
+        raise HTTPException(status_code=400, detail="The selected audio file is empty.")
+
+    return {
+        "ok": True,
+        "name": target.name,
+        "url": f"/sounds/{urllib.parse.quote(target.name)}",
     }
 
 @router.get("/tts/voices")
@@ -658,9 +719,7 @@ def import_myinstants_sound(
             False,
         }
 
-    sounds_path = Path(
-        "sounds"
-    )
+    sounds_path = data_path("sounds")
 
     sounds_path.mkdir(
         exist_ok=True
@@ -718,7 +777,7 @@ def import_myinstants_sound(
         "name":
         filename,
         "url":
-        f"/sounds/{filename}",
+        f"/sounds/{urllib.parse.quote(filename)}",
     }
 
 
@@ -745,6 +804,11 @@ def create_action(
             action.fade_enabled,
             action.repeat_gift_combos,
             action.skip_on_next_action,
+            action.execution_type,
+        )
+        set_setting(
+            f"action_stagger_delay_ms:{action_id}",
+            str(max(0, min(10000, action.stagger_delay_ms))),
         )
 
     return {
@@ -817,6 +881,14 @@ def duplicate_action(
             source["fade_enabled"],
             source["repeat_gift_combos"],
             source["skip_on_next_action"],
+            source.get(
+                "execution_type",
+                "auto",
+            ),
+        )
+        set_setting(
+            f"action_stagger_delay_ms:{duplicate_id}",
+            str(get_setting(f"action_stagger_delay_ms:{action_id}") or 100),
         )
 
         for step in source_steps:
@@ -873,6 +945,11 @@ def update_action(
         action.fade_enabled,
         action.repeat_gift_combos,
         action.skip_on_next_action,
+        action.execution_type,
+    )
+    set_setting(
+        f"action_stagger_delay_ms:{action_id}",
+        str(max(0, min(10000, action.stagger_delay_ms))),
     )
 
     return {

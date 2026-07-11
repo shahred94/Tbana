@@ -8,6 +8,7 @@ import tempfile
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 import edge_tts
@@ -15,6 +16,7 @@ import pygame
 import pyautogui
 
 from app.actions.windows_input import send_key_combo
+from app.core.paths import data_path
 
 
 class ActionExecutor:
@@ -25,10 +27,17 @@ class ActionExecutor:
 
         self.audio_lock = threading.RLock()
         self.music_generation = 0
+        self.sound_cache = {}
 
         try:
 
             pygame.mixer.init()
+            pygame.mixer.set_num_channels(
+                max(
+                    pygame.mixer.get_num_channels(),
+                    32,
+                )
+            )
 
             print(
                 "Audio system initialized."
@@ -148,6 +157,14 @@ class ActionExecutor:
                 action_type
             )
 
+    def stop_audio(self) -> None:
+        """Stop the shared streamed audio channel, including active TTS."""
+
+        # Do not take audio_lock here: playback intentionally owns it for the
+        # whole clip and Skip must be able to interrupt that clip.
+        if pygame.mixer.get_init():
+            pygame.mixer.music.stop()
+
     @staticmethod
     def deadline_from_action(
         action: dict,
@@ -204,13 +221,9 @@ class ActionExecutor:
 
         """Play sound action."""
 
-        sound_file = (
-            Path("sounds")
-            /
-            action.get(
-                "sound",
-                ""
-            )
+        sound_file = data_path(
+            "sounds",
+            Path(action.get("sound", "")).name,
         )
 
 
@@ -239,44 +252,49 @@ class ActionExecutor:
                 )
             )
 
-            music_generation = self.next_music_generation()
-
-            pygame.mixer.music.load(
-                str(sound_file)
+            sound = self.get_sound_effect(
+                sound_file
             )
 
-            pygame.mixer.music.set_volume(
+            sound.set_volume(
                 volume / 100
             )
 
-            pygame.mixer.music.play()
-
-            remaining = self.remaining_seconds(
-                deadline
+            start_delay = self.sound_start_delay(
+                action
             )
 
-            if (
-                remaining is not None
-                and
-                remaining > 0
-            ):
+            if start_delay > 0:
 
                 timer = threading.Timer(
-                    remaining,
-                    self.stop_music_if_busy,
+                    start_delay,
+                    self.start_sound_effect,
                     args=(
-                        music_generation,
+                        sound,
+                        deadline,
                     ),
                 )
 
                 timer.daemon = True
                 timer.start()
 
+            else:
+
+                self.start_sound_effect(
+                    sound,
+                    deadline,
+                )
+
             print(
                 "Playing sound:",
                 sound_file.name,
                 "volume:",
                 volume,
+                "delay:",
+                round(
+                    start_delay,
+                    3,
+                ),
             )
 
 
@@ -285,6 +303,142 @@ class ActionExecutor:
             print(
                 "Sound playback failed:",
                 error
+            )
+
+    @staticmethod
+    def sound_start_delay(
+        action: dict,
+    ) -> float:
+
+        """Return optional delayed start for repeated combo sound effects."""
+
+        try:
+
+            return max(
+                0.0,
+                float(
+                    action.get(
+                        "_sound_start_delay",
+                        0,
+                    )
+                    or
+                    0
+                ),
+            )
+
+        except (
+            TypeError,
+            ValueError,
+        ):
+
+            return 0.0
+
+    def start_sound_effect(
+        self,
+        sound,
+        deadline: float | None = None,
+    ) -> None:
+
+        """Start one sound-effect playback and stop it at the deadline."""
+
+        channel = sound.play()
+
+        remaining = self.remaining_seconds(
+            deadline
+        )
+
+        if (
+            channel is not None
+            and
+            remaining is not None
+            and
+            remaining > 0
+        ):
+
+            timer = threading.Timer(
+                remaining,
+                self.stop_sound_channel,
+                args=(
+                    channel,
+                ),
+            )
+
+            timer.daemon = True
+            timer.start()
+
+    def get_sound_effect(
+        self,
+        sound_file: Path,
+    ):
+
+        """Load and cache a sound effect for overlapping playback."""
+
+        if not pygame.mixer.get_init():
+
+            pygame.mixer.init()
+
+        pygame.mixer.set_num_channels(
+            max(
+                pygame.mixer.get_num_channels(),
+                32,
+            )
+        )
+
+        cache_key = str(
+            sound_file.resolve()
+        )
+
+        modified_time = sound_file.stat().st_mtime
+
+        with self.audio_lock:
+
+            cached = self.sound_cache.get(
+                cache_key
+            )
+
+            if (
+                cached
+                and
+                cached[0] == modified_time
+            ):
+
+                return cached[1]
+
+            sound = pygame.mixer.Sound(
+                str(sound_file)
+            )
+
+            self.sound_cache[
+                cache_key
+            ] = (
+                modified_time,
+                sound,
+            )
+
+            return sound
+
+    @staticmethod
+    def stop_sound_channel(
+        channel,
+    ) -> None:
+
+        """Stop one sound-effect channel when an action deadline expires."""
+
+        try:
+
+            if (
+                channel is not None
+                and
+                channel.get_busy()
+            ):
+
+                channel.stop()
+
+        except Exception as error:
+
+            print(
+                "Timed sound channel stop failed:",
+                error,
             )
 
     def stop_music_if_busy(
@@ -1010,13 +1164,53 @@ class ActionExecutor:
                     ),
                 )
 
+            webhook_payload = action.get(
+                "payload"
+            )
+
+            parsed_url = urllib.parse.urlparse(
+                url
+            )
+
+            use_tikfinity_form = (
+                isinstance(
+                    webhook_payload,
+                    dict,
+                )
+                and
+                parsed_url.hostname
+                in {
+                    "127.0.0.1",
+                    "localhost",
+                }
+                and
+                parsed_url.port == 6721
+            )
+
+            data = None
+            method = "GET"
+            headers = {
+                "User-Agent":
+                "TBanaStream/2.0",
+            }
+
+            if use_tikfinity_form:
+
+                data = urllib.parse.urlencode(
+                    webhook_payload
+                ).encode(
+                    "utf-8"
+                )
+                method = "POST"
+                headers[
+                    "Content-Type"
+                ] = "application/x-www-form-urlencoded"
+
             request = urllib.request.Request(
                 url,
-                method="GET",
-                headers={
-                    "User-Agent":
-                    "TBanaStream/2.0",
-                },
+                data=data,
+                method=method,
+                headers=headers,
             )
 
             with urllib.request.urlopen(

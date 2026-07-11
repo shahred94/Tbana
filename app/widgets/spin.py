@@ -20,7 +20,8 @@ from app.storage.sqlite_store import (
 )
 
 
-SPIN_COMMAND = "!spin"
+DEFAULT_SPIN_COMMAND = "!spin"
+SPIN_COMMAND = DEFAULT_SPIN_COMMAND
 
 DEFAULT_SEGMENTS = [
     "Try Again",
@@ -35,6 +36,7 @@ DEFAULT_SEGMENTS = [
 
 SPIN_SEGMENTS_SETTING = "spin_wheel_segments"
 SPIN_ENABLED_SETTING = "spin_wheel_enabled"
+SPIN_COMMAND_SETTING = "spin_wheel_command"
 SPIN_REQUIRE_FOLLOWER_SETTING = "spin_wheel_require_follower"
 SPIN_NON_FOLLOWER_COOLDOWN_SETTING = "spin_wheel_non_follower_cooldown_minutes"
 SPIN_FOLLOWER_COOLDOWN_SETTING = "spin_wheel_follower_cooldown_minutes"
@@ -70,6 +72,38 @@ def spin_enabled() -> bool:
     return str(
         value or "true"
     ).lower() != "false"
+
+
+def normalize_spin_command(
+    value: str | None,
+) -> str:
+    """Return a safe chat command for the spin widget."""
+
+    command = str(
+        value
+        or
+        DEFAULT_SPIN_COMMAND
+    ).strip().split()[0].lower()
+
+    if not command:
+
+        return DEFAULT_SPIN_COMMAND
+
+    if not command.startswith("!"):
+
+        command = f"!{command}"
+
+    return command
+
+
+def spin_command() -> str:
+    """Return the configured spin chat command."""
+
+    return normalize_spin_command(
+        get_setting(
+            SPIN_COMMAND_SETTING
+        )
+    )
 
 
 def setting_bool(
@@ -312,6 +346,8 @@ def spin_access_details(
 ) -> dict:
     """Check spin access and return viewer-facing cooldown details."""
 
+    command = spin_command()
+
     viewer_type = viewer_type_from_event(
         event
     )
@@ -346,12 +382,12 @@ def spin_access_details(
 
         message = (
             f"@{display_user} • {status_label} • "
-            "!spin requires follower status."
+            f"{command} requires follower status."
         )
 
         return {
             "allowed": False,
-            "reason": "!spin blocked: follower required.",
+            "reason": f"{command} blocked: follower required.",
             "reply": message,
             "viewer_type": viewer_type,
             "viewer_status": status_label,
@@ -441,13 +477,13 @@ def spin_access_details(
         )
         message = (
             f"@{display_user} • {status_label} • "
-            f"!spin cooldown: {duration} remaining."
+            f"{command} cooldown: {duration} remaining."
         )
 
         return {
             "allowed": False,
             "reason": (
-                f"!spin cooldown active for {event.user or 'Guest'} "
+                f"{command} cooldown active for {event.user or 'Guest'} "
                 f"({viewer_type.replace('_', ' ')}): "
                 f"{duration} remaining."
             ),
@@ -1110,7 +1146,10 @@ def run_spin_job(
                     )
                     or ""
                 ),
-                "command": SPIN_COMMAND,
+                "command": job.get(
+                    "command",
+                    spin_command(),
+                ),
                 "segments": job["segments"],
                 "chances": job.get(
                     "chances",
@@ -1233,7 +1272,9 @@ def enqueue_spin_job(
 def trigger_spin_command(
     event: LiveEvent,
 ) -> dict | None:
-    """Trigger spin widget when a viewer comments !spin."""
+    """Trigger spin widget when a viewer comments the configured command."""
+
+    configured_command = spin_command()
 
     simulator_event = bool(
         event.data.get(
@@ -1268,7 +1309,9 @@ def trigger_spin_command(
         else ""
     )
 
-    if not command.startswith(SPIN_COMMAND):
+    if not command.startswith(
+        configured_command
+    ):
 
         return None
 
@@ -1362,6 +1405,7 @@ def trigger_spin_command(
             "winner_index": winner_index,
             "winner_rarity": winner_rarity,
             "action_id": action_id,
+            "command": configured_command,
             "spin_ms": SPIN_DURATION_MS,
             "result_hold_ms": SPIN_RESULT_HOLD_MS,
             "action_start_buffer_ms": SPIN_ACTION_START_BUFFER_MS,
